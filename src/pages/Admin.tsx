@@ -64,7 +64,8 @@ function TabButton({ active, onClick, icon, label }: { active: boolean, onClick:
 }
 
 function GalleryPoster() {
-  const [photos, setPhotos] = useState<{id: number, title: string, filename: string}[]>([]);
+  const [photos, setPhotos] = useState<{id: number, title: string, filename: string, description: string, location: string}[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -88,30 +89,56 @@ function GalleryPoster() {
     }
   };
 
+  const handleEdit = (p: any) => {
+    setEditingId(p.id);
+    setTitle(p.title || "");
+    setDescription(p.description || "");
+    setLocation(p.location || "");
+    setFile(null);
+    setPreview(`/uploads/${p.filename}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setTitle(""); setDescription(""); setLocation(""); setFile(null); setPreview(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !title) return;
+    if (!editingId && !file) return;
+    if (!title) return;
     setLoading(true); setError(null); setSuccess(false);
-
-    const formData = new FormData();
-    formData.append("image", file);
-    formData.append("title", title);
-    if (description) formData.append("description", description);
-    if (location) formData.append("location", location);
 
     try {
       const token = localStorage.getItem("adminToken");
-      const response = await fetch("/api/admin/photos", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${token}` },
-        body: formData,
-      });
+      let response;
 
-      if (!response.ok) throw new Error("Upload failed");
-      setSuccess(true); setFile(null); setPreview(null); setTitle(""); setDescription(""); setLocation("");
+      if (editingId) {
+        response = await fetch(`/api/admin/photos/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ title, description, location })
+        });
+      } else {
+        const formData = new FormData();
+        if (file) formData.append("image", file);
+        formData.append("title", title);
+        if (description) formData.append("description", description);
+        if (location) formData.append("location", location);
+
+        response = await fetch("/api/admin/photos", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` },
+          body: formData,
+        });
+      }
+
+      if (!response.ok) throw new Error(editingId ? "Update failed" : "Upload failed");
+      setSuccess(true); cancelEdit();
       fetchPhotos();
     } catch (err) {
-      setError("Failed to upload the photo. Please try again.");
+      setError(editingId ? "Failed to update the photo info." : "Failed to upload the photo. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -130,13 +157,13 @@ function GalleryPoster() {
 
   return (
     <div>
-      <h2 className="text-xl font-serif text-charcoal mb-6">Upload a new plate</h2>
-      {success && <Alert type="success" message="Plate uploaded successfully." />}
+      <h2 className="text-xl font-serif text-charcoal mb-6">{editingId ? "Edit Plate Info" : "Upload a new plate"}</h2>
+      {success && <Alert type="success" message={editingId ? "Plate updated successfully." : "Plate uploaded successfully."} />}
       {error && <Alert type="error" message={error} />}
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
-          <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">Photo Image *</label>
+          <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">{editingId ? "Photo (Cannot be changed here)" : "Photo Image *"}</label>
           {!preview ? (
             <label className="flex flex-col items-center justify-center w-full h-48 border border-dashed border-soft-sepia rounded-sm hover:bg-warm-white transition-colors cursor-pointer bg-warm-white bg-opacity-50">
               <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -151,13 +178,15 @@ function GalleryPoster() {
           ) : (
             <div className="relative w-full rounded-sm overflow-hidden border border-soft-sepia max-w-sm mx-auto">
               <img src={preview} alt="Preview" className="w-full h-auto object-cover" />
-              <button 
-                type="button" 
-                onClick={() => {setFile(null); setPreview(null)}}
-                className="absolute top-2 right-2 p-2 bg-charcoal/80 backdrop-blur rounded-sm text-warm-white hover:bg-charcoal shadow-sm transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              {!editingId && (
+                <button 
+                  type="button" 
+                  onClick={() => {setFile(null); setPreview(null)}}
+                  className="absolute top-2 right-2 p-2 bg-charcoal/80 backdrop-blur rounded-sm text-warm-white hover:bg-charcoal shadow-sm transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -175,7 +204,10 @@ function GalleryPoster() {
           <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">Story / Description</label>
           <textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} className="input-field resize-none" placeholder="Tell the story behind this plate..." />
         </div>
-        <SubmitButton loading={loading} label="Upload Plate" />
+        <div className="flex space-x-2">
+          {editingId && <button type="button" onClick={cancelEdit} className="w-full py-3 px-4 bg-soft-sepia/50 text-charcoal rounded-sm text-xs uppercase tracking-widest font-semibold hover:bg-soft-sepia transition-colors">Cancel</button>}
+          <SubmitButton loading={loading} label={editingId ? "Update Plate" : "Upload Plate"} />
+        </div>
       </form>
 
       <div className="mt-12 space-y-4">
@@ -187,7 +219,10 @@ function GalleryPoster() {
                 <img src={`/uploads/${p.filename}`} alt={p.title} className="w-12 h-12 object-cover rounded-sm border border-soft-sepia" />
                 <div className="font-bold text-sm">{p.title}</div>
               </div>
-              <button type="button" onClick={() => handleDelete(p.id)} className="text-xs text-red-500 hover:text-red-700">Delete</button>
+              <div className="flex space-x-3">
+                <button type="button" onClick={() => handleEdit(p)} className="text-xs text-accent hover:text-charcoal">Edit</button>
+                <button type="button" onClick={() => handleDelete(p.id)} className="text-xs text-red-500 hover:text-red-700">Delete</button>
+              </div>
             </div>
           ))}
         </div>
@@ -198,6 +233,7 @@ function GalleryPoster() {
 
 function LinkManager() {
   const [links, setLinks] = useState<{id: number, name: string, url: string, icon: string}[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [icon, setIcon] = useState("");
@@ -209,21 +245,37 @@ function LinkManager() {
   };
   useEffect(() => { fetchLinks(); }, []);
 
+  const handleEdit = (l: any) => {
+    setEditingId(l.id);
+    setName(l.name);
+    setUrl(l.url);
+    setIcon(l.icon || "");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setName(""); setUrl(""); setIcon("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true); setStatus(null);
     try {
       const token = localStorage.getItem("adminToken");
-      const res = await fetch("/api/admin/links", {
-        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      const method = editingId ? "PUT" : "POST";
+      const endpoint = editingId ? `/api/admin/links/${editingId}` : "/api/admin/links";
+      
+      const res = await fetch(endpoint, {
+        method, headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ name, url, icon })
       });
       if (!res.ok) throw new Error("Failed");
-      setStatus({ type: "success", msg: "Link added successfully." });
-      setName(""); setUrl(""); setIcon("");
+      setStatus({ type: "success", msg: editingId ? "Link updated successfully." : "Link added successfully." });
+      cancelEdit();
       fetchLinks();
     } catch {
-      setStatus({ type: "error", msg: "Failed to add link." });
+      setStatus({ type: "error", msg: editingId ? "Failed to update link." : "Failed to add link." });
     } finally {
       setLoading(false);
     }
@@ -242,7 +294,7 @@ function LinkManager() {
 
   return (
     <div>
-      <h2 className="text-xl font-serif text-charcoal mb-6">Add Social Link</h2>
+      <h2 className="text-xl font-serif text-charcoal mb-6">{editingId ? "Edit Social Link" : "Add Social Link"}</h2>
       {status && <Alert type={status.type} message={status.msg} />}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -259,7 +311,10 @@ function LinkManager() {
              <input required type="url" value={url} onChange={e=>setUrl(e.target.value)} className="input-field" placeholder="https://..." />
            </div>
         </div>
-        <SubmitButton loading={loading} label="Add Link" />
+        <div className="flex space-x-2">
+          {editingId && <button type="button" onClick={cancelEdit} className="w-full py-3 px-4 bg-soft-sepia/50 text-charcoal rounded-sm text-xs uppercase tracking-widest font-semibold hover:bg-soft-sepia transition-colors">Cancel</button>}
+          <SubmitButton loading={loading} label={editingId ? "Update Link" : "Add Link"} />
+        </div>
       </form>
 
       <div className="mt-12 space-y-4">
@@ -271,7 +326,10 @@ function LinkManager() {
                 <div className="font-bold text-sm">{l.name}</div>
                 <div className="text-xs text-muted truncate max-w-[200px]">{l.url}</div>
               </div>
-              <button type="button" onClick={() => handleDelete(l.id)} className="text-xs text-red-500 hover:text-red-700">Delete</button>
+              <div className="flex space-x-3">
+                <button type="button" onClick={() => handleEdit(l)} className="text-xs text-accent hover:text-charcoal">Edit</button>
+                <button type="button" onClick={() => handleDelete(l.id)} className="text-xs text-red-500 hover:text-red-700">Delete</button>
+              </div>
             </div>
           ))}
         </div>
@@ -282,6 +340,7 @@ function LinkManager() {
 
 function SkillManager() {
   const [skills, setSkills] = useState<{id: number, name: string, level: string, icon: string}[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [name, setName] = useState("");
   const [level, setLevel] = useState("Intermediate");
   const [icon, setIcon] = useState("");
@@ -293,21 +352,37 @@ function SkillManager() {
   };
   useEffect(() => { fetchSkills(); }, []);
 
+  const handleEdit = (s: any) => {
+    setEditingId(s.id);
+    setName(s.name);
+    setLevel(s.level);
+    setIcon(s.icon || "");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setName(""); setLevel("Intermediate"); setIcon("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true); setStatus(null);
     try {
       const token = localStorage.getItem("adminToken");
-      const res = await fetch("/api/admin/skills", {
-        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      const method = editingId ? "PUT" : "POST";
+      const endpoint = editingId ? `/api/admin/skills/${editingId}` : "/api/admin/skills";
+      
+      const res = await fetch(endpoint, {
+        method, headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ name, level, icon })
       });
       if (!res.ok) throw new Error("Failed");
-      setStatus({ type: "success", msg: "Skill added successfully." });
-      setName(""); setLevel("Intermediate"); setIcon("");
+      setStatus({ type: "success", msg: editingId ? "Skill updated successfully." : "Skill added successfully." });
+      cancelEdit();
       fetchSkills();
     } catch {
-      setStatus({ type: "error", msg: "Failed to add skill." });
+      setStatus({ type: "error", msg: editingId ? "Failed to update skill." : "Failed to add skill." });
     } finally {
       setLoading(false);
     }
@@ -326,7 +401,7 @@ function SkillManager() {
 
   return (
     <div>
-      <h2 className="text-xl font-serif text-charcoal mb-6">Add Skill</h2>
+      <h2 className="text-xl font-serif text-charcoal mb-6">{editingId ? "Edit Skill" : "Add Skill"}</h2>
       {status && <Alert type={status.type} message={status.msg} />}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -347,7 +422,10 @@ function SkillManager() {
              </select>
            </div>
         </div>
-        <SubmitButton loading={loading} label="Add Skill" />
+        <div className="flex space-x-2">
+          {editingId && <button type="button" onClick={cancelEdit} className="w-full py-3 px-4 bg-soft-sepia/50 text-charcoal rounded-sm text-xs uppercase tracking-widest font-semibold hover:bg-soft-sepia transition-colors">Cancel</button>}
+          <SubmitButton loading={loading} label={editingId ? "Update Skill" : "Add Skill"} />
+        </div>
       </form>
 
       <div className="mt-12 space-y-4">
@@ -359,7 +437,10 @@ function SkillManager() {
                 <div className="font-bold text-sm">{s.name}</div>
                 <div className="text-xs text-muted">{s.level}</div>
               </div>
-              <button type="button" onClick={() => handleDelete(s.id)} className="text-xs text-red-500 hover:text-red-700">Delete</button>
+              <div className="flex space-x-3">
+                <button type="button" onClick={() => handleEdit(s)} className="text-xs text-accent hover:text-charcoal">Edit</button>
+                <button type="button" onClick={() => handleDelete(s.id)} className="text-xs text-red-500 hover:text-red-700">Delete</button>
+              </div>
             </div>
           ))}
         </div>
@@ -573,6 +654,11 @@ function SettingsManager() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{type: "success"|"error", msg: string} | null>(null);
 
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwStatus, setPwStatus] = useState<{type: "success"|"error", msg: string} | null>(null);
+
   useEffect(() => {
     fetch("/api/settings")
       .then(r => r.json())
@@ -634,6 +720,30 @@ function SettingsManager() {
       setStatus({ type: "error", msg: "Failed to save settings." });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwLoading(true); setPwStatus(null);
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch("/api/admin/change-password", {
+        method: "POST", 
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed");
+      }
+      setPwStatus({ type: "success", msg: "Password changed successfully." });
+      setCurrentPassword("");
+      setNewPassword("");
+    } catch (err: any) {
+      setPwStatus({ type: "error", msg: err.message || "Failed to change password." });
+    } finally {
+      setPwLoading(false);
     }
   };
 
@@ -709,6 +819,20 @@ function SettingsManager() {
         </div>
 
         <SubmitButton loading={loading} label="Save Settings" />
+      </form>
+
+      <h3 className="text-lg font-serif text-charcoal mt-12 mb-4 border-t border-soft-sepia pt-8">Change Password</h3>
+      {pwStatus && <Alert type={pwStatus.type} message={pwStatus.msg} />}
+      <form onSubmit={handlePasswordSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">Current Password</label>
+          <input type="password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)} className="input-field" required />
+        </div>
+        <div className="space-y-2">
+          <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">New Password</label>
+          <input type="password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} className="input-field" required />
+        </div>
+        <SubmitButton loading={pwLoading} label="Change Password" />
       </form>
     </div>
   );

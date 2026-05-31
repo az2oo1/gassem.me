@@ -80,21 +80,19 @@ export default function Layout() {
                   key={link.name}
                   to={link.path}
                   className={clsx(
-                    "relative pb-1 transition-colors",
+                    "relative pb-1 transition-colors group",
                     isActive
                       ? "text-accent font-semibold"
                       : "text-charcoal-light hover:text-accent font-medium hover:font-semibold"
                   )}
                 >
                   {link.name}
-                  {isActive && (
-                    <motion.span
-                      layoutId="nav-underline"
-                      className="absolute left-0 bottom-0 w-full h-[1.5px] bg-accent"
-                      initial={false}
-                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    />
-                  )}
+                  <span
+                    className={clsx(
+                      "absolute left-0 bottom-0 h-[1.5px] bg-accent transition-all duration-300",
+                      isActive ? "w-full" : "w-0 group-hover:w-full"
+                    )}
+                  />
                 </Link>
               );
             })}

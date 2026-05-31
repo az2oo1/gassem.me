@@ -51,11 +51,15 @@
   --skill-beginner: #A3A8C2;
 }
 
+html {
+  overflow-y: scroll !important;
+  scrollbar-gutter: stable;
+}
+
 body {
   background-color: var(--warm-white);
   color: var(--charcoal);
   font-family: var(--font-sans);
-  overflow-y: scroll;
 }
 
 /* Custom Scrollbar styling */
@@ -69,12 +73,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(--soft-sepia);
+  background-color: var(--muted);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--accent);
+  background-color: var(--charcoal-light);
 }
 
 * {

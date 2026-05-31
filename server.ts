@@ -314,14 +314,61 @@ app.post("/api/admin/photos", verifyAdmin, upload.single("image"), optimizeImage
 });
 
 // Auth
+const failedAttempts: Record<string, { count: number, lockedUntil: number | null }> = {};
+
 app.post("/api/auth/login", (req, res) => {
+  const ip = req.ip || req.connection.remoteAddress || 'unknown';
+  const now = Date.now();
+  
+  if (!failedAttempts[ip]) {
+    failedAttempts[ip] = { count: 0, lockedUntil: null };
+  }
+  
+  const attempt = failedAttempts[ip];
+  
+  if (attempt.lockedUntil && now < attempt.lockedUntil) {
+    return res.status(429).json({ error: `Too many failed attempts. Try again in ${Math.ceil((attempt.lockedUntil - now) / 60000)} minutes.` });
+  } else if (attempt.lockedUntil && now >= attempt.lockedUntil) {
+    attempt.count = 0;
+    attempt.lockedUntil = null;
+  }
+
   const { password } = req.body;
-  if (password === ADMIN_PASSWORD) {
+  const setting = db.prepare("SELECT value FROM settings WHERE key = 'admin_password'").get() as any;
+  const currentPassword = setting?.value || ADMIN_PASSWORD;
+
+  if (password === currentPassword) {
+    attempt.count = 0;
+    attempt.lockedUntil = null;
     const token = jwt.sign({ admin: true }, JWT_SECRET, { expiresIn: '24h' });
     res.json({ token });
   } else {
+    attempt.count += 1;
+    if (attempt.count >= 10) {
+      attempt.lockedUntil = now + 60 * 60 * 1000; // 1 hour
+      return res.status(429).json({ error: "Too many failed attempts. Locked out for 1 hour." });
+    }
     res.status(401).json({ error: "Invalid password" });
   }
+});
+
+app.post("/api/admin/change-password", verifyAdmin, (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const setting = db.prepare("SELECT value FROM settings WHERE key = 'admin_password'").get() as any;
+  const actualPassword = setting?.value || ADMIN_PASSWORD;
+  
+  if (currentPassword !== actualPassword) {
+    return res.status(401).json({ error: "Incorrect current password" });
+  }
+  
+  const existingSetting = db.prepare("SELECT key FROM settings WHERE key = 'admin_password'").get();
+  if (existingSetting) {
+    db.prepare("UPDATE settings SET value = ? WHERE key = 'admin_password'").run(newPassword);
+  } else {
+    db.prepare("INSERT INTO settings (key, value) VALUES ('admin_password', ?)").run(newPassword);
+  }
+  
+  res.json({ success: true });
 });
 
 // GET Links
@@ -444,7 +491,16 @@ app.delete("/api/admin/projects/:id", verifyAdmin, (req, res) => {
   }
 });
 
-// Admin Delete Photos
+// Admin Edit / Delete Photos
+app.put("/api/admin/photos/:id", verifyAdmin, (req, res) => {
+  const { title, description, location } = req.body;
+  try {
+    db.prepare("UPDATE photos SET title = ?, description = ?, location = ? WHERE id = ?").run(title || null, description || null, location || null, req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update photo" });
+  }
+});
 app.delete("/api/admin/photos/:id", verifyAdmin, (req, res) => {
   try {
     const photo = db.prepare("SELECT filename FROM photos WHERE id = ?").get(req.params.id) as any;
