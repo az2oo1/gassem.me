@@ -1,24 +1,47 @@
+name: portfolio-app
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: portfolio-app:latest
+    image: node:22
     container_name: portfolio-app
+    working_dir: /app
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      # - GEMINI_API_KEY=your_api_key_here
+      - DB_DIR=/app-data/db
+      - UPLOADS_DIR=/app-data/uploads
     volumes:
-      # Persist SQLite database
-      - data-volume:/app/data
-      # Persist uploaded photos/images
-      - uploads-volume:/app/uploads
+      # Persistent storage for the git repository and node_modules cache
+      - portfolio-code:/app
+      # Persistent storage for sqlite DB and uploaded files
+      - portfolio-data:/app-data
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        if [ ! -d .git ]; then
+          echo 'Initializing repository...'
+          git init
+          git remote add origin https://github.com/az2oo1/gassem.me.git
+        fi
+        
+        echo 'Fetching latest changes...'
+        git fetch --all
+        
+        echo 'Applying updates...'
+        git reset --hard origin/main || git reset --hard origin/master
+        
+        echo 'Installing dependencies...'
+        npm install
+        
+        echo 'Building application...'
+        npm run build
+        
+        echo 'Starting app...'
+        npm run start
     restart: unless-stopped
 
 volumes:
-  data-volume:
-    name: portfolio-data
-  uploads-volume:
-    name: portfolio-uploads
+  portfolio-code:
+    name: portfolio-app-code
+  portfolio-data:
+    name: portfolio-app-data

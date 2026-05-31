@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Photo } from "../types";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 
 export default function PhotoDetails() {
   const { id } = useParams<{ id: string }>();
@@ -113,7 +113,7 @@ export default function PhotoDetails() {
               <span className="text-xs font-mono font-medium">{photo.avgRating?.toFixed(1) || "—"} / 5 <span className="text-muted">({photo.ratingCount || 0})</span></span>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 mb-6">
               <span className="text-[10px] font-medium uppercase text-charcoal block">
                 {userRating ? 'Your Rating' : 'Rate this plate'}
               </span>
@@ -143,6 +143,15 @@ export default function PhotoDetails() {
                 })}
               </div>
             </div>
+            
+            <a 
+              href={`/uploads/${photo.filename}`} 
+              download={photo.filename}
+              className="flex items-center justify-center w-full bg-accent text-white py-3 px-4 rounded-sm hover:bg-accent/90 transition-colors text-xs font-semibold uppercase tracking-widest shadow-sm group"
+            >
+              <Download className="w-4 h-4 mr-2 group-hover:-translate-y-0.5 transition-transform" />
+              Download Full Image
+            </a>
           </div>
         </div>
       </div>

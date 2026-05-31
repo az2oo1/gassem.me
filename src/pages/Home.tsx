@@ -129,7 +129,7 @@ export default function Home() {
                 Abdulaziz Algassem
               </h1>
               <span className="block text-2xl text-charcoal-light font-arabic opacity-70 text-left w-full" dir="rtl" lang="ar">
-                عبد العزيز القاسم
+                عبدالعزيز القاسم
               </span>
             </div>
             

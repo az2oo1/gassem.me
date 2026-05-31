@@ -25,13 +25,13 @@ const verifyAdmin = (req: any, res: any, next: any) => {
 };
 
 // Ensure uploads directory exists
-const UPLOADS_DIR = path.join(process.cwd(), "uploads");
+const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(process.cwd(), "uploads");
 if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
 // Ensure database directory exists
-const DB_DIR = path.join(process.cwd(), "data");
+const DB_DIR = process.env.DB_DIR || path.join(process.cwd(), "data");
 if (!fs.existsSync(DB_DIR)) {
   fs.mkdirSync(DB_DIR, { recursive: true });
 }
