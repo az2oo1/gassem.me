@@ -32,3 +32,11 @@ export interface Project {
   liveUrl: string | null;
   icon?: string | null;
 }
+
+export interface Article {
+  id: number;
+  title: string;
+  excerpt: string | null;
+  content: string;
+  createdAt: string;
+}

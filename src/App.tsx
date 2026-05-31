@@ -5,6 +5,7 @@ import Projects from "./pages/Projects";
 import Gallery from "./pages/Gallery";
 import PhotoDetails from "./pages/PhotoDetails";
 import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="gallery" element={<Gallery />} />
           <Route path="gallery/:id" element={<PhotoDetails />} />
           <Route path="blog" element={<Blog />} />
+          <Route path="blog/:id" element={<BlogPost />} />
           <Route path="admin/login" element={<AdminLogin />} />
           <Route path="admin/post" element={<Admin />} />
           <Route path="admin/dashboard" element={<Admin />} />

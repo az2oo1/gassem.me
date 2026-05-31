@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Upload, X, LogOut, Plus, Link as LinkIcon, Code2, Briefcase } from "lucide-react";
+import { Upload, X, LogOut, Plus, Link as LinkIcon, Code2, Briefcase, PenTool } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { IconCombobox } from "../components/IconCombobox";
 
 export default function Admin() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"gallery"|"links"|"skills"|"projects"|"settings">("gallery");
+  const [activeTab, setActiveTab] = useState<"gallery"|"links"|"skills"|"projects"|"settings"|"articles">("gallery");
 
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
@@ -31,8 +31,9 @@ export default function Admin() {
         </button>
       </div>
       
-      <div className="flex space-x-2 border-b border-soft-sepia/50 overflow-x-auto pb-px">
+      <div className="flex space-x-2 border-b border-soft-sepia/50 overflow-x-auto pb-px scrollbar-hide">
         <TabButton active={activeTab === "gallery"} onClick={() => setActiveTab("gallery")} icon={<Upload className="w-4 h-4"/>} label="Gallery Poster" />
+        <TabButton active={activeTab === "articles"} onClick={() => setActiveTab("articles")} icon={<PenTool className="w-4 h-4"/>} label="Writings" />
         <TabButton active={activeTab === "settings"} onClick={() => setActiveTab("settings")} icon={<Code2 className="w-4 h-4"/>} label="Settings" />
         <TabButton active={activeTab === "links"} onClick={() => setActiveTab("links")} icon={<LinkIcon className="w-4 h-4"/>} label="Links" />
         <TabButton active={activeTab === "skills"} onClick={() => setActiveTab("skills")} icon={<Code2 className="w-4 h-4"/>} label="Skills" />
@@ -41,6 +42,7 @@ export default function Admin() {
 
       <div className="bg-transparent rounded-sm p-6 md:p-8 shadow-sm border border-soft-sepia">
         {activeTab === "gallery" && <GalleryPoster />}
+        {activeTab === "articles" && <ArticleManager />}
         {activeTab === "settings" && <SettingsManager />}
         {activeTab === "links" && <LinkManager />}
         {activeTab === "skills" && <SkillManager />}
@@ -648,6 +650,7 @@ function SettingsManager() {
   const [heroImage1File, setHeroImage1File] = useState<File|null>(null);
   const [heroImage2File, setHeroImage2File] = useState<File|null>(null);
   const [heroImage3File, setHeroImage3File] = useState<File|null>(null);
+  const [resumeFile, setResumeFile] = useState<File|null>(null);
   const [topSkills, setTopSkills] = useState<{name: string, icon: string}[]>([]);
   const [currentTopSkillName, setCurrentTopSkillName] = useState("");
   const [currentTopSkillIcon, setCurrentTopSkillIcon] = useState("");
@@ -702,6 +705,7 @@ function SettingsManager() {
       const formData = new FormData();
       formData.append("bio", bio);
       formData.append("resumeUrl", resumeUrl);
+      if (resumeFile) formData.append("resumeFile", resumeFile);
       formData.append("topSkills", JSON.stringify(topSkills));
       if (heroImage1File) formData.append("heroImage1", heroImage1File);
       else formData.append("heroImage1", heroImage1);
@@ -757,8 +761,13 @@ function SettingsManager() {
           <textarea rows={3} value={bio} onChange={e=>setBio(e.target.value)} className="input-field resize-none" placeholder="Full-stack developer blending technical precision..." />
         </div>
         <div className="space-y-2">
-          <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">Resume PDF Name/Path</label>
-          <input type="text" value={resumeUrl} onChange={e=>setResumeUrl(e.target.value)} className="input-field" placeholder="/resume.pdf" />
+          <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">Resume PDF Name/Path/File</label>
+          <div className="flex gap-2 items-center">
+            <input type="text" value={resumeUrl} onChange={e=>setResumeUrl(e.target.value)} className="input-field grow" placeholder="/resume.pdf" />
+            <span className="text-xs text-charcoal-light uppercase tracking-widest font-semibold px-2">OR</span>
+            <input type="file" accept="application/pdf" onChange={e => { if (e.target.files && e.target.files[0]) setResumeFile(e.target.files[0]) }} className="input-field text-xs file:mr-4 file:py-1 file:px-2 file:rounded-sm file:border-0 file:text-xs file:bg-charcoal file:text-warm-white hover:file:bg-accent flex-shrink-0" />
+          </div>
+          {(resumeUrl || resumeFile) && <div className="text-[10px] truncate">{resumeFile ? resumeFile.name : resumeUrl}</div>}
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -834,6 +843,129 @@ function SettingsManager() {
         </div>
         <SubmitButton loading={pwLoading} label="Change Password" />
       </form>
+    </div>
+  );
+}
+
+function ArticleManager() {
+  const [articles, setArticles] = useState<any[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  
+  const [title, setTitle] = useState("");
+  const [excerpt, setExcerpt] = useState("");
+  const [content, setContent] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchArticles = () => fetch("/api/articles").then(r => r.json()).then(setArticles).catch(console.error);
+  useEffect(() => { fetchArticles(); }, []);
+
+  const handleEdit = (a: any) => {
+    setEditingId(a.id);
+    setTitle(a.title);
+    setExcerpt(a.excerpt || "");
+    setContent(a.content);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setTitle(""); setExcerpt(""); setContent("");
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !content) return;
+    setLoading(true); setError(null); setSuccess(false);
+    
+    try {
+      const token = localStorage.getItem("adminToken");
+      const method = editingId ? "PUT" : "POST";
+      const url = editingId ? `/api/admin/articles/${editingId}` : "/api/admin/articles";
+      
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ title, excerpt, content })
+      });
+      if (!res.ok) throw new Error("Saving failed");
+      
+      setSuccess(true);
+      cancelEdit();
+      fetchArticles();
+    } catch (err) {
+      setError("Operation failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure?")) return;
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`/api/admin/articles/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } });
+      if (res.ok) fetchArticles();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div>
+        <h2 className="text-xl font-serif text-charcoal mb-6">{editingId ? "Edit Article" : "Write a New Article"}</h2>
+        
+        {error && <div className="p-3 mb-6 bg-red-50 text-red-700 text-sm border border-red-100 rounded-sm">{error}</div>}
+        {success && <div className="p-3 mb-6 bg-green-50 text-green-700 text-sm border border-green-100 rounded-sm">Article saved successfully!</div>}
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">Title *</label>
+            <input type="text" value={title} onChange={e=>setTitle(e.target.value)} className="input-field" required />
+          </div>
+          <div className="space-y-2">
+            <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">Excerpt</label>
+            <textarea rows={2} value={excerpt} onChange={e=>setExcerpt(e.target.value)} className="input-field resize-none" placeholder="Short description for the list page..." />
+          </div>
+          <div className="space-y-2">
+            <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">Content (Markdown supported) *</label>
+            <textarea rows={12} value={content} onChange={e=>setContent(e.target.value)} className="input-field font-mono text-sm" required placeholder="Write your article here..." />
+          </div>
+          <div className="flex space-x-3 pt-4">
+            <SubmitButton loading={loading} label={editingId ? "Save Changes" : "Publish Article"} />
+            {editingId && (
+              <button type="button" onClick={cancelEdit} className="px-6 py-2 border border-soft-sepia text-charcoal text-[10px] uppercase tracking-widest font-semibold hover:bg-neutral-50 transition-colors rounded-sm">
+                Cancel
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+
+      <div className="pt-8 border-t border-soft-sepia/50">
+        <h3 className="text-lg font-serif text-charcoal mb-4">Published Articles</h3>
+        {articles.length === 0 ? (
+          <p className="text-sm text-charcoal-light">No articles written yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {articles.map((a: any) => (
+              <div key={a.id} className="flex justify-between items-center p-4 border border-soft-sepia/50 rounded-sm hover:border-soft-sepia transition-colors bg-white">
+                <div>
+                  <h4 className="font-medium text-charcoal">{a.title}</h4>
+                  <p className="text-xs text-charcoal-light mt-1 max-w-sm truncate">{a.excerpt}</p>
+                </div>
+                <div className="flex space-x-3 items-center">
+                  <button onClick={() => handleEdit(a)} className="text-[10px] uppercase tracking-widest text-accent hover:text-charcoal transition-colors">Edit</button>
+                  <button onClick={() => handleDelete(a.id)} className="text-[10px] uppercase tracking-widest text-red-500 hover:text-red-700 transition-colors">Delete</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

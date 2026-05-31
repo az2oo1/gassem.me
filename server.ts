@@ -86,6 +86,14 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT
   );
+
+  CREATE TABLE IF NOT EXISTS articles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    excerpt TEXT,
+    content TEXT NOT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 // Seed tables if empty
@@ -200,14 +208,15 @@ app.get("/api/settings", (req, res) => {
 });
 
 // Admin Update Settings
-app.post("/api/admin/settings", verifyAdmin, upload.fields([{name: "heroImage1"}, {name: "heroImage2"}, {name: "heroImage3"}]), optimizeImages, (req, res) => {
-  const { bio, resumeUrl, topSkills } = req.body;
-  let { heroImage1, heroImage2, heroImage3 } = req.body;
+app.post("/api/admin/settings", verifyAdmin, upload.fields([{name: "heroImage1"}, {name: "heroImage2"}, {name: "heroImage3"}, {name: "resumeFile"}]), optimizeImages, (req, res) => {
+  const { bio, topSkills } = req.body;
+  let { heroImage1, heroImage2, heroImage3, resumeUrl } = req.body;
   
   const files = req.files as { [fieldname: string]: Express.Multer.File[] };
   if (files?.['heroImage1']?.[0]) heroImage1 = `/uploads/${files['heroImage1'][0].filename}`;
   if (files?.['heroImage2']?.[0]) heroImage2 = `/uploads/${files['heroImage2'][0].filename}`;
   if (files?.['heroImage3']?.[0]) heroImage3 = `/uploads/${files['heroImage3'][0].filename}`;
+  if (files?.['resumeFile']?.[0]) resumeUrl = `/uploads/${files['resumeFile'][0].filename}`;
 
   try {
     const stmt = db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)");
@@ -512,6 +521,59 @@ app.delete("/api/admin/photos/:id", verifyAdmin, (req, res) => {
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete photo" });
+  }
+});
+
+// GET Articles
+app.get("/api/articles", (req, res) => {
+  try {
+    const articles = db.prepare("SELECT * FROM articles ORDER BY createdAt DESC").all();
+    res.json(articles);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch articles" });
+  }
+});
+
+// GET a single Article
+app.get("/api/articles/:id", (req, res) => {
+  try {
+    const article = db.prepare("SELECT * FROM articles WHERE id = ?").get(req.params.id);
+    if (!article) return res.status(404).json({ error: "Article not found" });
+    res.json(article);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch article" });
+  }
+});
+
+// Admin Add Article
+app.post("/api/admin/articles", verifyAdmin, (req, res) => {
+  const { title, excerpt, content } = req.body;
+  try {
+    const stmt = db.prepare("INSERT INTO articles (title, excerpt, content) VALUES (?, ?, ?)");
+    const info = stmt.run(title, excerpt || null, content);
+    res.json({ success: true, id: info.lastInsertRowid });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to add article" });
+  }
+});
+
+// Admin Edit / Delete Articles
+app.put("/api/admin/articles/:id", verifyAdmin, (req, res) => {
+  const { title, excerpt, content } = req.body;
+  try {
+    db.prepare("UPDATE articles SET title = ?, excerpt = ?, content = ? WHERE id = ?").run(title, excerpt || null, content, req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update article" });
+  }
+});
+
+app.delete("/api/admin/articles/:id", verifyAdmin, (req, res) => {
+  try {
+    db.prepare("DELETE FROM articles WHERE id = ?").run(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete article" });
   }
 });
 
