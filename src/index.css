@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'Thmanyah';
+  src: url('/fonts/thmanyah/thmanyah_typeface/thmanyahseriftext/woff2/thmanyahseriftext-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@theme {
+  --font-serif: "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-arabic: "Thmanyah", "Helvetica Neue", Arial, sans-serif;
+
+  --color-warm-white: var(--warm-white);
+  --color-soft-sepia: var(--soft-sepia);
+  --color-muted-beige: var(--muted-beige);
+  --color-charcoal: var(--charcoal);
+  --color-charcoal-light: var(--charcoal-light);
+  --color-accent: var(--accent);
+  --color-muted: var(--muted);
+  --color-skill-advanced: var(--skill-advanced);
+  --color-skill-intermediate: var(--skill-intermediate);
+  --color-skill-beginner: var(--skill-beginner);
+}
+
+:root {
+  --warm-white: #F9F7F2;
+  --soft-sepia: #E5E1D8;
+  --muted-beige: #EAE8E3;
+  --charcoal: #2C2C2C;
+  --charcoal-light: #6B6B6B;
+  --accent: #8C8273;
+  --muted: #9A948A;
+  --skill-advanced: #7A9E7E;
+  --skill-intermediate: #B38A5C;
+  --skill-beginner: #878CA3;
+}
+
+:root.dark {
+  --warm-white: #1A1918;
+  --soft-sepia: #33302C;
+  --muted-beige: #242220;
+  --charcoal: #F9F7F2;
+  --charcoal-light: #A39E93;
+  --accent: #C2B59B;
+  --muted: #7A756C;
+  --skill-advanced: #A3C9A6;
+  --skill-intermediate: #D4A373;
+  --skill-beginner: #A3A8C2;
+}
+
+body {
+  background-color: var(--warm-white);
+  color: var(--charcoal);
+  font-family: var(--font-sans);
+  overflow-y: scroll;
+}
+
+/* Custom Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--warm-white);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--soft-sepia);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--soft-sepia) var(--warm-white);
+}
+
+.font-arabic {
+  font-family: var(--font-arabic) !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+}
+
+.input-field {
+  @apply w-full px-4 py-2 border border-soft-sepia rounded-sm focus:outline-none focus:border-accent transition-colors bg-warm-white text-sm;
+}

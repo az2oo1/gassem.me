@@ -1,0 +1,198 @@
+import { Link, Outlet, useLocation } from "react-router-dom";
+import { Camera, Code, Home, User, Sun, Moon, BookOpen, Menu, X } from "lucide-react";
+import clsx from "clsx";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+
+export default function Layout() {
+  const location = useLocation();
+  const [isDark, setIsDark] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if (stored === "dark" || (!stored && prefersDark)) {
+      document.documentElement.classList.add("dark");
+      setIsDark(true);
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    if (isDark) {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+      setIsDark(false);
+    } else {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+      setIsDark(true);
+    }
+  };
+
+  // Close sidebar when escape key is pressed
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsSidebarOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Prevent scrolling when sidebar is open
+  useEffect(() => {
+    if (isSidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [isSidebarOpen]);
+
+  const navLinks = [
+    { name: "Home", path: "/", icon: <Home className="w-4 h-4" /> },
+    { name: "Projects", path: "/projects", icon: <Code className="w-4 h-4" /> },
+    { name: "Gallery", path: "/gallery", icon: <Camera className="w-4 h-4" /> },
+    { name: "Blog", path: "/blog", icon: <BookOpen className="w-4 h-4" /> },
+  ];
+
+  return (
+    <div className="min-h-screen flex flex-col font-sans bg-warm-white text-charcoal transition-colors duration-300">
+      <header className="flex justify-between items-center px-6 md:px-12 py-6 md:py-8 border-b border-soft-sepia bg-warm-white sticky top-0 z-40">
+        <div className="flex items-center gap-4">
+          <Link to="/" className="font-serif italic text-2xl tracking-tight text-charcoal-light hover:text-charcoal transition-colors">
+            gassem<span className="font-normal text-lg">.me</span>
+          </Link>
+          <span className="hidden sm:block h-1 w-1 rounded-full bg-accent"></span>
+          <span className="hidden sm:block text-xs uppercase tracking-[0.2em] font-medium opacity-60">
+            Portfolio & Lens
+          </span>
+        </div>
+        
+        <div className="flex items-center gap-6 sm:gap-10">
+          <nav className="hidden md:flex gap-6 sm:gap-10 text-xs uppercase tracking-widest font-semibold items-center">
+            {navLinks.map((link) => {
+              const isActive = location.pathname === link.path || (link.path !== '/' && location.pathname.startsWith(link.path));
+              return (
+                <Link
+                  key={link.name}
+                  to={link.path}
+                  className={clsx(
+                    "relative pb-1 transition-colors",
+                    isActive
+                      ? "text-accent font-semibold"
+                      : "text-charcoal-light hover:text-accent font-medium hover:font-semibold"
+                  )}
+                >
+                  {link.name}
+                  {isActive && (
+                    <motion.span
+                      layoutId="nav-underline"
+                      className="absolute left-0 bottom-0 w-full h-[1.5px] bg-accent"
+                      initial={false}
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+          
+          <button 
+            onClick={toggleTheme} 
+            className="p-2 text-charcoal-light hover:text-charcoal transition-colors"
+            aria-label="Toggle Theme"
+          >
+            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
+          
+          <button 
+            onClick={() => setIsSidebarOpen(true)}
+            className="md:hidden p-2 -mr-2 text-charcoal-light hover:text-charcoal transition-colors"
+            aria-label="Open Menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        </div>
+      </header>
+
+      {/* Slider Overlay */}
+      <div 
+        className={clsx(
+          "fixed inset-0 bg-charcoal/20 backdrop-blur-sm z-50 transition-opacity duration-300",
+          isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+        onClick={() => setIsSidebarOpen(false)}
+      />
+
+      {/* Side Slider */}
+      <aside
+        className={clsx(
+          "fixed top-0 right-0 h-full w-72 bg-warm-white border-l border-soft-sepia z-50 transform transition-transform duration-300 ease-in-out flex flex-col shadow-2xl",
+          isSidebarOpen ? "translate-x-0" : "translate-x-full"
+        )}
+      >
+        <div className="p-6 border-b border-soft-sepia flex justify-between items-center">
+          <span className="font-serif italic text-xl text-charcoal">Menu</span>
+          <button 
+            onClick={() => setIsSidebarOpen(false)}
+            className="p-2 -mr-2 text-charcoal-light hover:text-charcoal transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <nav className="flex flex-col p-6 gap-2">
+          {navLinks.map((link) => {
+            const isActive = location.pathname === link.path || (link.path !== '/' && location.pathname.startsWith(link.path));
+            return (
+              <Link
+                key={link.name}
+                to={link.path}
+                className={clsx(
+                  "flex items-center gap-4 p-3 rounded-sm transition-colors text-xs uppercase tracking-widest font-semibold",
+                  isActive
+                    ? "bg-soft-sepia/30 text-accent"
+                    : "text-charcoal-light hover:bg-soft-sepia/20 hover:text-charcoal"
+                )}
+              >
+                {link.icon}
+                <span>{link.name}</span>
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="mt-auto p-6 border-t border-soft-sepia">
+          <Link to="/admin/dashboard" className="text-[10px] uppercase tracking-widest font-medium text-muted hover:text-accent transition-colors block py-2">
+            Admin Login
+          </Link>
+        </div>
+      </aside>
+
+      <main className="flex-grow w-full max-w-7xl mx-auto px-6 md:px-12 py-12 relative overflow-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="w-full"
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
+      </main>
+
+      <footer className="px-6 md:px-12 py-6 bg-warm-white border-t border-soft-sepia flex flex-col md:flex-row justify-between items-center gap-4 mt-auto">
+        <p className="text-[10px] tracking-widest uppercase font-medium text-muted">© {new Date().getFullYear()} Abdulaziz — Crafted in Saudi Arabia</p>
+        <div className="flex items-center gap-3">
+          <div className="h-[1px] w-8 bg-accent hidden md:block"></div>
+          <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-charcoal-light">Portfolio 1.0</span>
+        </div>
+        <Link to="/admin/dashboard" className="hidden md:block text-[10px] uppercase tracking-widest border-b border-transparent hover:border-accent font-medium text-muted hover:text-accent transition-colors">Admin Login</Link>
+      </footer>
+    </div>
+  );
+}

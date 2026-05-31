@@ -1,0 +1,24 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: portfolio-app:latest
+    container_name: portfolio-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      # - GEMINI_API_KEY=your_api_key_here
+    volumes:
+      # Persist SQLite database
+      - data-volume:/app/data
+      # Persist uploaded photos/images
+      - uploads-volume:/app/uploads
+    restart: unless-stopped
+
+volumes:
+  data-volume:
+    name: portfolio-data
+  uploads-volume:
+    name: portfolio-uploads
