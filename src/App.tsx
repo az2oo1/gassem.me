@@ -8,23 +8,26 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
+import { LanguageProvider } from "./contexts/LanguageContext";
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="projects" element={<Projects />} />
-          <Route path="gallery" element={<Gallery />} />
-          <Route path="gallery/:id" element={<PhotoDetails />} />
-          <Route path="blog" element={<Blog />} />
-          <Route path="blog/:id" element={<BlogPost />} />
-          <Route path="admin/login" element={<AdminLogin />} />
-          <Route path="admin/post" element={<Admin />} />
-          <Route path="admin/dashboard" element={<Admin />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <LanguageProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="projects" element={<Projects />} />
+            <Route path="gallery" element={<Gallery />} />
+            <Route path="gallery/:id" element={<PhotoDetails />} />
+            <Route path="blog" element={<Blog />} />
+            <Route path="blog/:id" element={<BlogPost />} />
+            <Route path="admin/login" element={<AdminLogin />} />
+            <Route path="admin/post" element={<Admin />} />
+            <Route path="admin/dashboard" element={<Admin />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </LanguageProvider>
   );
 }

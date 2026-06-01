@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Photo } from "../types";
 import { Camera, Image as ImageIcon } from "lucide-react";
+import { useLanguage } from "../contexts/LanguageContext";
 
 function BlurImage({ src, alt }: { src: string; alt: string }) {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -20,6 +21,7 @@ function BlurImage({ src, alt }: { src: string; alt: string }) {
 }
 
 export default function Gallery() {
+  const { t } = useLanguage();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,14 +50,14 @@ export default function Gallery() {
         <div>
           <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-3 flex items-center gap-3">
             <Camera className="w-8 h-8 text-accent" strokeWidth={1.5} />
-            Gallery
+            {t("gallery.title")}
           </h2>
           <p className="text-charcoal-light text-sm max-w-lg leading-relaxed">
-            A curated selection of photography.
+            {t("gallery.desc")}
           </p>
         </div>
         <div className="text-[10px] uppercase tracking-widest font-mono text-muted flex items-center gap-2">
-           <ImageIcon className="w-4 h-4" strokeWidth={1.5} /> {photos.length} Plates
+           <ImageIcon className="w-4 h-4" strokeWidth={1.5} /> {photos.length} {t("gallery.count")}
         </div>
       </div>
 
@@ -76,13 +78,13 @@ export default function Gallery() {
         </div>
       ) : error ? (
         <div className="text-center text-charcoal-light py-12">
-          <p>{error}</p>
+          <p>{t(error === "Could not load the gallery." ? "gallery.error" : error)}</p>
         </div>
       ) : photos.length === 0 ? (
         <div className="text-center text-charcoal-light py-12 space-y-4">
-          <p>No plates have been registered yet.</p>
+          <p>{t("gallery.empty")}</p>
           <Link to="/admin/dashboard" className="inline-block px-4 py-2 border border-soft-sepia rounded-sm hover:bg-soft-sepia/50 text-xs uppercase tracking-widest transition-colors font-semibold">
-            Upload the first plate
+            {t("gallery.upload")}
           </Link>
         </div>
       ) : (

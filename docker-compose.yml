@@ -31,7 +31,7 @@ services:
         git reset --hard origin/main || git reset --hard origin/master
         
         echo 'Installing dependencies...'
-        npm install
+        npm install --include=dev
         
         echo 'Building application...'
         npm run build

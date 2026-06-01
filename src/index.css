@@ -10,14 +10,65 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: "Thmanyah Sans";
+  src: url("/fonts/thmanyah/thmanyah%20typeface/thmanyahsans/woff2/thmanyahsans-Regular.woff2")
+    format("woff2");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Thmanyah Sans";
+  src: url("/fonts/thmanyah/thmanyah%20typeface/thmanyahsans/woff2/thmanyahsans-Medium.woff2")
+    format("woff2");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Thmanyah Sans";
+  src: url("/fonts/thmanyah/thmanyah%20typeface/thmanyahsans/woff2/thmanyahsans-Bold.woff2")
+    format("woff2");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Thmanyah Display";
+  src: url("/fonts/thmanyah/thmanyah%20typeface/thmanyahserifdisplay/woff2/thmanyahserifdisplay-Regular.woff2")
+    format("woff2");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Thmanyah Display";
+  src: url("/fonts/thmanyah/thmanyah%20typeface/thmanyahserifdisplay/woff2/thmanyahserifdisplay-Medium.woff2")
+    format("woff2");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Thmanyah Display";
+  src: url("/fonts/thmanyah/thmanyah%20typeface/thmanyahserifdisplay/woff2/thmanyahserifdisplay-Bold.woff2")
+    format("woff2");
+  font-weight: 700;
+  font-style: normal;
+}
+
 @theme {
   --font-serif:
     "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times,
     serif;
   --font-sans:
-    "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    "Thmanyah Sans", "Inter", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-arabic: "Thmanyah", "Helvetica Neue", Arial, sans-serif;
+  --font-arabic-sans: "Thmanyah Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-arabic-display:
+    "Thmanyah Display", "Helvetica Neue", Arial, sans-serif;
 
   --color-warm-white: var(--warm-white);
   --color-soft-sepia: var(--soft-sepia);
@@ -68,6 +119,21 @@ body {
   font-family: var(--font-sans);
 }
 
+html.font-arabic {
+  --font-serif:
+    "Thmanyah", "Playfair Display", ui-serif, Georgia, Cambria,
+    "Times New Roman", Times, serif;
+  --font-sans:
+    "Thmanyah Sans", "Inter", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+html.font-arabic .en-name {
+  font-family:
+    "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times,
+    serif !important;
+}
+
 /* Custom Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
@@ -107,4 +173,145 @@ h6 {
 
 .input-field {
   @apply w-full px-4 py-2 border border-soft-sepia rounded-sm focus:outline-none focus:border-accent transition-colors bg-warm-white text-sm;
+}
+
+/* React Quill Theme Overrides */
+.ql-snow.ql-toolbar,
+.ql-snow .ql-toolbar {
+  border-color: var(--soft-sepia) !important;
+  font-family: var(--font-sans) !important;
+  border-top-left-radius: 0.125rem;
+  border-top-right-radius: 0.125rem;
+}
+
+.ql-snow.ql-container,
+.ql-snow .ql-container {
+  border-color: var(--soft-sepia) !important;
+  font-family: var(--font-sans);
+  border-bottom-left-radius: 0.125rem;
+  border-bottom-right-radius: 0.125rem;
+}
+
+.ql-font-arabic {
+  font-family: var(--font-arabic) !important;
+}
+
+.ql-font-arabic-sans {
+  font-family: var(--font-arabic-sans) !important;
+}
+
+.ql-font-arabic-display {
+  font-family: var(--font-arabic-display) !important;
+}
+
+.ql-font-serif {
+  font-family: var(--font-serif) !important;
+}
+
+.ql-snow .ql-picker.ql-font {
+  width: 200px !important;
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="arabic"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="arabic"]::before {
+  content: "Thmanyah Serif" !important;
+  font-family: var(--font-arabic);
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="arabic-sans"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="arabic-sans"]::before {
+  content: "Thmanyah Sans" !important;
+  font-family: var(--font-arabic-sans);
+}
+
+.ql-snow
+  .ql-picker.ql-font
+  .ql-picker-label[data-value="arabic-display"]::before,
+.ql-snow
+  .ql-picker.ql-font
+  .ql-picker-item[data-value="arabic-display"]::before {
+  content: "Thmanyah Display" !important;
+  font-family: var(--font-arabic-display);
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="serif"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="serif"]::before {
+  content: "Serif (Playfair)";
+  font-family: var(--font-serif);
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item::before {
+  content: "Sans Serif" !important;
+}
+
+.ql-snow .ql-stroke {
+  stroke: var(--charcoal-light) !important;
+}
+
+.ql-snow .ql-fill {
+  fill: var(--charcoal-light) !important;
+}
+
+.ql-snow .ql-picker {
+  color: var(--charcoal-light) !important;
+}
+
+.ql-snow .ql-active .ql-stroke,
+.ql-snow .ql-picker-label:hover .ql-stroke,
+.ql-snow .ql-picker-item:hover .ql-stroke,
+button:hover .ql-stroke {
+  stroke: var(--charcoal) !important;
+}
+
+.ql-snow .ql-active .ql-fill,
+.ql-snow .ql-picker-label:hover .ql-fill,
+.ql-snow .ql-picker-item:hover .ql-fill,
+button:hover .ql-fill {
+  fill: var(--charcoal) !important;
+}
+
+.ql-snow .ql-active .ql-picker-label,
+.ql-snow .ql-active .ql-picker-item,
+.ql-snow .ql-picker-label:hover,
+.ql-snow .ql-picker-item:hover {
+  color: var(--charcoal) !important;
+}
+
+.ql-snow .ql-picker-options {
+  background-color: var(--warm-white) !important;
+  border-color: var(--soft-sepia) !important;
+}
+
+html[dir="rtl"] .ql-snow .ql-picker-label {
+  padding-left: 2px;
+  padding-right: 8px;
+}
+
+html[dir="rtl"] .ql-snow .ql-picker.ql-font .ql-picker-label,
+html[dir="rtl"] .ql-snow .ql-picker.ql-header .ql-picker-label,
+html[dir="rtl"] .ql-snow .ql-picker.ql-font .ql-picker-item,
+html[dir="rtl"] .ql-snow .ql-picker.ql-header .ql-picker-item {
+  padding-left: 8px;
+  padding-right: 2px;
+  direction: ltr;
+  text-align: left;
+}
+
+html[dir="rtl"] .ql-snow .ql-picker-label svg {
+  right: auto;
+  left: 0;
+}
+
+html[dir="rtl"] .ql-snow .ql-picker.ql-font .ql-picker-label svg,
+html[dir="rtl"] .ql-snow .ql-picker.ql-header .ql-picker-label svg {
+  right: 0;
+  left: auto;
+}
+
+.ql-editor.ql-blank::before {
+  color: var(--muted) !important;
+  font-style: italic;
 }
