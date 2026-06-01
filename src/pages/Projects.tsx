@@ -165,12 +165,12 @@ export default function Projects() {
                   tags.map((tag) => (
                     <span
                       key={tag}
-                      className="group/tag flex items-center overflow-hidden px-2 py-1.5 bg-soft-sepia/20 text-charcoal-light rounded-sm font-medium hover:bg-soft-sepia/40 transition-all duration-300 max-w-[2rem] hover:max-w-[12rem] cursor-default box-border"
+                      className="group/tag flex items-center gap-2 overflow-hidden px-2 py-1.5 bg-soft-sepia/20 text-charcoal-light rounded-sm font-medium hover:bg-soft-sepia/40 transition-all duration-300 max-w-[2rem] hover:max-w-[12rem] cursor-default box-border"
                     >
                       <span className="shrink-0 flex items-center justify-center w-4 h-4">
                         {getTechIcon(tag)}
                       </span>
-                      <span className="text-[10px] whitespace-nowrap opacity-0 group-hover/tag:opacity-100 transition-opacity duration-300 pl-2">
+                      <span className="text-[10px] whitespace-nowrap opacity-0 group-hover/tag:opacity-100 transition-opacity duration-300">
                         {tag}
                       </span>
                     </span>

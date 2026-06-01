@@ -89,19 +89,15 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-warm-white text-charcoal transition-colors duration-300">
-      <header className="flex justify-between items-center px-6 md:px-12 py-6 md:py-8 border-b border-soft-sepia bg-warm-white sticky top-0 z-40">
-        <div className="flex items-center gap-4">
+      <header className="flex justify-between items-center px-6 md:px-12 py-4 md:py-5 border-b border-soft-sepia bg-warm-white sticky top-0 z-40">
+        <div className="flex items-center gap-4 rtl:gap-8">
           <Link
             to="/"
             dir="ltr"
-            className="font-serif en-name italic text-2xl tracking-tight text-charcoal-light hover:text-charcoal transition-colors inline-flex"
+            className="hover:opacity-80 transition-opacity inline-flex items-center"
           >
-            gassem<span className="font-normal text-lg">.me</span>
+            <img src="/logo.svg" alt="gassem.me" className="h-12 md:h-14 w-auto" />
           </Link>
-          <span className="hidden sm:block h-1 w-1 rounded-full bg-accent"></span>
-          <span className="hidden sm:block text-xs uppercase tracking-[0.2em] font-medium opacity-60">
-            {t("footer.portfolio")}
-          </span>
         </div>
 
         <div className="flex items-center gap-6 sm:gap-10">
@@ -124,7 +120,7 @@ export default function Layout() {
                   {link.name}
                   <span
                     className={clsx(
-                      "absolute left-0 bottom-0 h-[1.5px] bg-accent transition-all duration-300",
+                      "absolute start-0 bottom-0 h-[1.5px] bg-accent transition-all duration-300",
                       isActive ? "w-full" : "w-0 group-hover:w-full",
                     )}
                   />
@@ -181,8 +177,8 @@ export default function Layout() {
       {/* Side Slider */}
       <aside
         className={clsx(
-          "fixed top-0 right-0 h-full w-72 bg-warm-white border-l border-soft-sepia z-50 transform transition-transform duration-300 ease-in-out flex flex-col shadow-2xl",
-          isSidebarOpen ? "translate-x-0" : "translate-x-full",
+          "fixed top-0 end-0 h-full w-72 bg-warm-white border-s border-soft-sepia z-50 transform transition-transform duration-300 ease-in-out flex flex-col shadow-2xl",
+          isSidebarOpen ? "translate-x-0" : "translate-x-full rtl:-translate-x-full",
         )}
       >
         <div className="p-6 border-b border-soft-sepia flex justify-between items-center">

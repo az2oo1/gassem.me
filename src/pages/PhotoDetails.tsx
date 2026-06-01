@@ -95,16 +95,16 @@ export default function PhotoDetails() {
 
         {/* Info Container */}
         <div className="w-full lg:w-1/3 xl:w-1/4 flex flex-col gap-8 lg:sticky lg:top-24">
-          <div>
-            <h1 className="font-serif text-3xl md:text-4xl text-charcoal mb-2 leading-tight">
+          <div className="flex flex-col gap-4">
+            <h1 className="font-serif text-3xl md:text-4xl text-charcoal leading-tight">
               {language === "ar" && photo.titleAr ? photo.titleAr : photo.title}
             </h1>
             {photo.location && (
-              <p className="text-[10px] uppercase tracking-[0.15em] font-mono text-charcoal-light flex items-center gap-2 mb-6">
+              <p className="text-[10px] uppercase tracking-[0.15em] rtl:tracking-normal font-mono text-charcoal-light flex items-center gap-2">
                  {photo.location}
               </p>
             )}
-            <p className="text-sm leading-relaxed text-charcoal-light font-light">
+            <p className="text-sm leading-relaxed text-charcoal-light font-light mt-2">
               {language === "ar" && photo.descriptionAr 
                 ? photo.descriptionAr 
                 : (photo.description || "No description provided.")}

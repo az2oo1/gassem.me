@@ -105,12 +105,12 @@ export default function Gallery() {
                 </div>
                 
                 <div className="px-1 flex justify-between items-start gap-4">
-                  <div>
-                    <h5 className="font-serif text-lg text-charcoal group-hover:text-accent transition-colors">
+                  <div className="flex flex-col gap-1 rtl:gap-2">
+                    <h5 className="font-serif text-lg leading-tight text-charcoal group-hover:text-accent transition-colors">
                       {language === "ar" && photo.titleAr ? photo.titleAr : photo.title}
                     </h5>
                     {photo.location && (
-                      <span className="text-[10px] uppercase tracking-wider text-charcoal-light mt-1 block">
+                      <span className="text-[10px] uppercase tracking-wider rtl:tracking-normal text-charcoal-light block">
                         {photo.location}
                       </span>
                     )}

@@ -54,12 +54,12 @@ export function IconCombobox({
   return (
     <div className="relative w-full" ref={wrapperRef}>
       <div className="relative flex items-center">
-        <div className="absolute left-3 text-muted">
+        <div className="absolute start-3 text-muted">
           {value ? getDynamicIcon(value) : <LucideIcons.Search className="w-4 h-4" />}
         </div>
         <input
           type="text"
-          className="input-field !pl-10 cursor-text"
+          className="input-field !ps-10 cursor-text"
           placeholder={placeholder}
           value={open ? search : value}
           onChange={(e) => {
