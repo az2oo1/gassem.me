@@ -21,7 +21,7 @@ function BlurImage({ src, alt }: { src: string; alt: string }) {
 }
 
 export default function Gallery() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +107,7 @@ export default function Gallery() {
                 <div className="px-1 flex justify-between items-start gap-4">
                   <div>
                     <h5 className="font-serif text-lg text-charcoal group-hover:text-accent transition-colors">
-                      {photo.title}
+                      {language === "ar" && photo.titleAr ? photo.titleAr : photo.title}
                     </h5>
                     {photo.location && (
                       <span className="text-[10px] uppercase tracking-wider text-charcoal-light mt-1 block">

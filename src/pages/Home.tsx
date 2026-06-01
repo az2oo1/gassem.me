@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useState } from "react";
-import { LinkItem, Skill } from "../types";
+import { LinkItem, Skill, Certificate } from "../types";
 import SkillCard from "../components/SkillCard";
 import {
   Github,
@@ -9,6 +9,7 @@ import {
   Mail,
   Link as LinkIcon,
   Terminal,
+  ArrowUpRight,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import * as FaIcons from "react-icons/fa";
@@ -91,6 +92,7 @@ export default function Home() {
   const { t, language } = useLanguage();
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
+  const [certs, setCerts] = useState<Certificate[]>([]);
   const [bio, setBio] = useState("");
   const [bioAr, setBioAr] = useState("");
   const [resumeUrl, setResumeUrl] = useState("/resume.pdf");
@@ -108,6 +110,9 @@ export default function Home() {
     fetch("/api/skills")
       .then((res) => res.json())
       .then(setSkills);
+    fetch("/api/certificates")
+      .then((res) => res.json())
+      .then(setCerts);
     fetch("/api/settings")
       .then((res) => res.json())
       .then((data) => {
@@ -335,6 +340,37 @@ export default function Home() {
               <SkillCard key={skill.id} skill={skill} />
             ))}
           </div>
+          
+          {certs.length > 0 && (
+            <div className="mt-12">
+              <h3 className="font-serif text-2xl text-charcoal mb-6 border-b border-soft-sepia/50 pb-2">
+                Certificates
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {certs.map((c) => (
+                  <div key={c.id} className="p-4 border border-soft-sepia rounded-sm bg-warm-white flex flex-col justify-between hover:shadow-sm transition-shadow">
+                    <div>
+                      <h4 className="font-bold text-charcoal">{c.title}</h4>
+                      <div className="text-sm text-charcoal-light mt-1">{c.issuer}</div>
+                      {c.issue_date && <div className="text-xs text-muted mt-2">{c.issue_date}</div>}
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      {c.pdf_filename && (
+                        <a href={`/uploads/${c.pdf_filename}`} target="_blank" rel="noopener noreferrer" className="text-xs uppercase tracking-widest text-charcoal hover:text-accent inline-flex items-center group flex-shrink-0">
+                          View PDF <ArrowUpRight className="w-3 h-3 ml-1 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
+                        </a>
+                      )}
+                      {c.url && (
+                        <a href={c.url} target="_blank" rel="noopener noreferrer" className="text-xs uppercase tracking-widest text-accent hover:text-charcoal inline-flex items-center group flex-shrink-0">
+                          View Credential <ArrowUpRight className="w-3 h-3 ml-1 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
       )}
     </div>

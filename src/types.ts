@@ -2,7 +2,9 @@ export interface Photo {
   id: number;
   filename: string;
   title: string;
+  titleAr?: string | null;
   description: string | null;
+  descriptionAr?: string | null;
   location: string | null;
   createdAt: string;
   avgRating?: number | null;
@@ -39,4 +41,13 @@ export interface Article {
   excerpt: string | null;
   content: string;
   createdAt: string;
+}
+
+export interface Certificate {
+  id: number;
+  title: string;
+  issuer: string;
+  issue_date: string | null;
+  url: string | null;
+  pdf_filename: string | null;
 }

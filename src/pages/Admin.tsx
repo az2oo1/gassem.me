@@ -7,6 +7,7 @@ import {
   Link as LinkIcon,
   Code2,
   Briefcase,
+  Award,
   PenTool,
   Bold,
   Italic,
@@ -99,13 +100,19 @@ const wafFetch = async (url: string | URL | Request, options?: RequestInit) => {
       options.body = formData;
     }
   }
-  return window.fetch(url, options);
+  return window.fetch(url, options).then(res => {
+    if (res.status === 401 || res.status === 403) {
+      localStorage.removeItem('adminToken');
+      window.location.href = '/admin/login';
+    }
+    return res;
+  });
 };
 
 export default function Admin() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<
-    "gallery" | "links" | "skills" | "projects" | "settings" | "articles"
+    "gallery" | "links" | "skills" | "certificates" | "projects" | "settings" | "articles"
   >("gallery");
 
   useEffect(() => {
@@ -171,6 +178,12 @@ export default function Admin() {
           label="Skills"
         />
         <TabButton
+          active={activeTab === "certificates"}
+          onClick={() => setActiveTab("certificates")}
+          icon={<Award className="w-4 h-4" />}
+          label="Certificates"
+        />
+        <TabButton
           active={activeTab === "projects"}
           onClick={() => setActiveTab("projects")}
           icon={<Briefcase className="w-4 h-4" />}
@@ -184,6 +197,7 @@ export default function Admin() {
         {activeTab === "settings" && <SettingsManager />}
         {activeTab === "links" && <LinkManager />}
         {activeTab === "skills" && <SkillManager />}
+        {activeTab === "certificates" && <CertificateManager />}
         {activeTab === "projects" && <ProjectManager />}
       </div>
     </div>
@@ -229,7 +243,9 @@ function GalleryPoster() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [title, setTitle] = useState("");
+  const [titleAr, setTitleAr] = useState("");
   const [description, setDescription] = useState("");
+  const [descriptionAr, setDescriptionAr] = useState("");
   const [location, setLocation] = useState("");
 
   const [loading, setLoading] = useState(false);
@@ -257,7 +273,9 @@ function GalleryPoster() {
   const handleEdit = (p: any) => {
     setEditingId(p.id);
     setTitle(p.title || "");
+    setTitleAr(p.titleAr || "");
     setDescription(p.description || "");
+    setDescriptionAr(p.descriptionAr || "");
     setLocation(p.location || "");
     setFile(null);
     setPreview(`/uploads/${p.filename}`);
@@ -267,7 +285,9 @@ function GalleryPoster() {
   const cancelEdit = () => {
     setEditingId(null);
     setTitle("");
+    setTitleAr("");
     setDescription("");
+    setDescriptionAr("");
     setLocation("");
     setFile(null);
     setPreview(null);
@@ -292,13 +312,15 @@ function GalleryPoster() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ title, description, location }),
+          body: JSON.stringify({ title, titleAr, description, descriptionAr, location }),
         });
       } else {
         const formData = new FormData();
         if (file) formData.append("image", file);
         formData.append("title", title);
+        if (titleAr) formData.append("titleAr", titleAr);
         if (description) formData.append("description", description);
+        if (descriptionAr) formData.append("descriptionAr", descriptionAr);
         if (location) formData.append("location", location);
 
         response = await wafFetch("/api/admin/photos", {
@@ -418,6 +440,19 @@ function GalleryPoster() {
           </div>
           <div className="space-y-2">
             <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">
+              Title (Arabic)
+            </label>
+            <input
+              type="text"
+              dir="rtl"
+              value={titleAr}
+              onChange={(e) => setTitleAr(e.target.value)}
+              className="input-field"
+              placeholder="e.g. منتصف الليل في الرياض"
+            />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">
               Location
             </label>
             <input
@@ -429,17 +464,32 @@ function GalleryPoster() {
             />
           </div>
         </div>
-        <div className="space-y-2">
-          <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">
-            Story / Description
-          </label>
-          <textarea
-            rows={4}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="input-field resize-none"
-            placeholder="Tell the story behind this plate..."
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">
+              Description
+            </label>
+            <textarea
+              rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="input-field resize-none"
+              placeholder="Tell the story behind this plate..."
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">
+              Description (Arabic)
+            </label>
+            <textarea
+              rows={4}
+              dir="rtl"
+              value={descriptionAr}
+              onChange={(e) => setDescriptionAr(e.target.value)}
+              className="input-field resize-none"
+              placeholder="قصة الصورة..."
+            />
+          </div>
         </div>
         <div className="flex space-x-2">
           {editingId && (
@@ -688,6 +738,163 @@ function LinkManager() {
                 >
                   Delete
                 </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+function CertificateManager() {
+  const [certs, setCerts] = React.useState<any[]>([]);
+  const [editingId, setEditingId] = React.useState<number | null>(null);
+  const [title, setTitle] = React.useState("");
+  const [issuer, setIssuer] = React.useState("");
+  const [issue_date, setIssueDate] = React.useState("");
+  const [url, setUrl] = React.useState("");
+  const [pdfFile, setPdfFile] = React.useState<File | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [status, setStatus] = React.useState<{ type: "success" | "error"; msg: string } | null>(null);
+
+  const fetchCerts = () => {
+    wafFetch("/api/certificates")
+      .then((r) => r.json())
+      .then(setCerts)
+      .catch(console.error);
+  };
+  React.useEffect(() => { fetchCerts(); }, []);
+
+  const handleEdit = (c: any) => {
+    setEditingId(c.id);
+    setTitle(c.title);
+    setIssuer(c.issuer);
+    setIssueDate(c.issue_date || "");
+    setUrl(c.url || "");
+    setPdfFile(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setTitle("");
+    setIssuer("");
+    setIssueDate("");
+    setUrl("");
+    setPdfFile(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setStatus(null);
+    try {
+      const token = localStorage.getItem("adminToken");
+      const method = editingId ? "PUT" : "POST";
+      const endpoint = editingId ? `/api/admin/certificates/${editingId}` : "/api/admin/certificates";
+
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("issuer", issuer);
+      if (issue_date) formData.append("issue_date", issue_date);
+      if (url) formData.append("url", url);
+      if (pdfFile) formData.append("pdf", pdfFile);
+
+      const res = await wafFetch(endpoint, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Failed");
+      setStatus({ type: "success", msg: editingId ? "Certificate updated." : "Certificate added." });
+      cancelEdit();
+      fetchCerts();
+    } catch {
+      setStatus({ type: "error", msg: "Operation failed." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure?")) return;
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await wafFetch(`/api/admin/certificates/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) fetchCerts();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  return (
+    <div>
+      <h2 className="text-xl font-serif text-charcoal mb-6">
+        {editingId ? "Edit Certificate" : "Add Certificate"}
+      </h2>
+      {status && <Alert type={status.type} message={status.msg} />}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal mb-1">Title *</label>
+            <input required value={title} onChange={(e) => setTitle(e.target.value)} className="input-field" placeholder="e.g. AWS Certified" />
+          </div>
+          <div>
+            <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal mb-1">Issuer *</label>
+            <input required value={issuer} onChange={(e) => setIssuer(e.target.value)} className="input-field" placeholder="e.g. Amazon" />
+          </div>
+          <div>
+            <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal mb-1">Date</label>
+            <input type="text" value={issue_date} onChange={(e) => setIssueDate(e.target.value)} className="input-field" placeholder="e.g. 2023-05-15" />
+          </div>
+          <div>
+            <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal mb-1">URL</label>
+            <input type="url" value={url} onChange={(e) => setUrl(e.target.value)} className="input-field" placeholder="https://..." />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal mb-1">
+              Certificate PDF (Optional)
+            </label>
+            <input 
+              type="file" 
+              accept=".pdf,image/*" 
+              onChange={(e) => setPdfFile(e.target.files ? e.target.files[0] : null)} 
+              className="text-xs" 
+            />
+            {editingId && certs.find(c => c.id === editingId)?.pdf_filename && (
+              <p className="text-xs text-charcoal-light mt-1">
+                Current: <a href={`/uploads/${certs.find(c => c.id === editingId)?.pdf_filename}`} target="_blank" rel="noopener noreferrer" className="underline hover:text-accent">View PDF</a>
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex space-x-2 mt-4">
+          {editingId && (
+            <button type="button" onClick={cancelEdit} className="w-full py-3 px-4 bg-soft-sepia/50 text-charcoal flex-1 text-xs uppercase font-semibold">Cancel</button>
+          )}
+          <SubmitButton loading={loading} label={editingId ? "Update" : "Add"} />
+        </div>
+      </form>
+
+      <div className="mt-12 space-y-4">
+        <h3 className="font-serif text-lg text-charcoal">Existing Certificates</h3>
+        <div className="space-y-2">
+          {certs.map((c) => (
+            <div key={c.id} className="flex justify-between items-center p-3 border border-soft-sepia rounded-sm">
+              <div>
+                <div className="font-bold text-sm">{c.title}</div>
+                <div className="text-xs text-muted">{c.issuer} &middot; {c.issue_date}</div>
+              </div>
+              <div className="flex space-x-3">
+                <button type="button" onClick={() => handleEdit(c)} className="text-xs text-accent">Edit</button>
+                <button type="button" onClick={() => handleDelete(c.id)} className="text-xs text-red-500">Delete</button>
               </div>
             </div>
           ))}

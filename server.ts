@@ -15,12 +15,12 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 // Middleware to check admin token
 const verifyAdmin = (req: any, res: any, next: any) => {
   const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ error: "Unauthorized" });
+  if (!token) return res.status(401).json({ error: "Unauthorized - missing token" });
   try {
     jwt.verify(token, JWT_SECRET);
     next();
   } catch (err) {
-    res.status(403).json({ error: "Invalid token" });
+    res.status(403).json({ error: "Invalid token: " + err.message });
   }
 };
 
@@ -38,16 +38,21 @@ if (!fs.existsSync(DB_DIR)) {
 }
 
 // Setup Database
-const db = new Database(path.join(DB_DIR, "gallery.db"));
-db.pragma('journal_mode = WAL');
+const portfolioDb = new Database(path.join(DB_DIR, "portfolio.db"));
+portfolioDb.pragma('journal_mode = WAL');
+
+const galleryDb = new Database(path.join(DB_DIR, "gallery.db"));
+galleryDb.pragma('journal_mode = WAL');
 
 // Initialize schema
-db.exec(`
+galleryDb.exec(`
   CREATE TABLE IF NOT EXISTS photos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     filename TEXT NOT NULL,
     title TEXT NOT NULL,
+    titleAr TEXT,
     description TEXT,
+    descriptionAr TEXT,
     location TEXT,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
   );
@@ -59,7 +64,21 @@ db.exec(`
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(photo_id) REFERENCES photos(id) ON DELETE CASCADE
   );
+`);
 
+try {
+  galleryDb.exec("ALTER TABLE photos ADD COLUMN titleAr TEXT;");
+} catch (e) {
+  // Ignore if column already exists
+}
+
+try {
+  galleryDb.exec("ALTER TABLE photos ADD COLUMN descriptionAr TEXT;");
+} catch (e) {
+  // Ignore if column already exists
+}
+
+portfolioDb.exec(`
   CREATE TABLE IF NOT EXISTS links (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -84,6 +103,15 @@ db.exec(`
     icon TEXT
   );
 
+  CREATE TABLE IF NOT EXISTS certificates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    issuer TEXT NOT NULL,
+    issue_date TEXT,
+    url TEXT,
+    pdf_filename TEXT
+  );
+
   CREATE TABLE IF NOT EXISTS settings (
     key TEXT PRIMARY KEY,
     value TEXT
@@ -98,24 +126,30 @@ db.exec(`
   );
 `);
 
+try {
+  portfolioDb.exec("ALTER TABLE certificates ADD COLUMN pdf_filename TEXT;");
+} catch (e) {
+  // Ignore if column already exists
+}
+
 // Seed tables if empty
 try {
-  db.exec("ALTER TABLE skills ADD COLUMN icon TEXT");
+  portfolioDb.exec("ALTER TABLE skills ADD COLUMN icon TEXT");
 } catch (e) {
   // column might already exist, ignore
 }
 
 try {
-  db.exec("ALTER TABLE projects ADD COLUMN icon TEXT");
+  portfolioDb.exec("ALTER TABLE projects ADD COLUMN icon TEXT");
 } catch (e) {
   // column might already exist, ignore
 }
 
-const countLinks = db.prepare("SELECT COUNT(*) as count FROM links").get() as {
+const countLinks = portfolioDb.prepare("SELECT COUNT(*) as count FROM links").get() as {
   count: number;
 };
 if (countLinks.count === 0) {
-  const linkStmt = db.prepare(
+  const linkStmt = portfolioDb.prepare(
     "INSERT INTO links (name, url, icon) VALUES (?, ?, ?)",
   );
   linkStmt.run("GitHub", "https://github.com", "Github");
@@ -124,11 +158,11 @@ if (countLinks.count === 0) {
   linkStmt.run("Email", "mailto:hello@example.com", "Mail");
 }
 
-const countSettings = db
+const countSettings = portfolioDb
   .prepare("SELECT COUNT(*) as count FROM settings")
   .get() as { count: number };
 if (countSettings.count === 0) {
-  const settingStmt = db.prepare(
+  const settingStmt = portfolioDb.prepare(
     "INSERT INTO settings (key, value) VALUES (?, ?)",
   );
   settingStmt.run(
@@ -164,11 +198,11 @@ if (countSettings.count === 0) {
   );
 }
 
-const countSkills = db
+const countSkills = portfolioDb
   .prepare("SELECT COUNT(*) as count FROM skills")
   .get() as { count: number };
 if (countSkills.count === 0) {
-  const skillStmt = db.prepare(
+  const skillStmt = portfolioDb.prepare(
     "INSERT INTO skills (name, level) VALUES (?, ?)",
   );
   skillStmt.run("React", "Advanced");
@@ -178,11 +212,11 @@ if (countSkills.count === 0) {
   skillStmt.run("SQLite", "Intermediate");
 }
 
-const countProjects = db
+const countProjects = portfolioDb
   .prepare("SELECT COUNT(*) as count FROM projects")
   .get() as { count: number };
 if (countProjects.count === 0) {
-  const projStmt = db.prepare(
+  const projStmt = portfolioDb.prepare(
     "INSERT INTO projects (title, description, tech_stack, githubUrl, liveUrl) VALUES (?, ?, ?, ?, ?)",
   );
   projStmt.run(
@@ -303,7 +337,7 @@ app.use("/uploads", express.static(UPLOADS_DIR));
 // GET Settings
 app.get("/api/settings", (req, res) => {
   try {
-    const rows = db.prepare("SELECT * FROM settings").all() as {
+    const rows = portfolioDb.prepare("SELECT * FROM settings").all() as {
       key: string;
       value: string;
     }[];
@@ -343,7 +377,7 @@ app.post(
       resumeUrl = `/uploads/${files["resumeFile"][0].filename}`;
 
     try {
-      const stmt = db.prepare(
+      const stmt = portfolioDb.prepare(
         "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
       );
       if (bio !== undefined) stmt.run("bio", bio);
@@ -368,7 +402,7 @@ app.post(
 // GET all photos with their average rating
 app.get("/api/photos", (req, res) => {
   try {
-    const stmt = db.prepare(`
+    const stmt = galleryDb.prepare(`
       SELECT p.*, 
              (SELECT AVG(rating) FROM ratings WHERE photo_id = p.id) as avgRating,
              (SELECT COUNT(*) FROM ratings WHERE photo_id = p.id) as ratingCount
@@ -387,7 +421,7 @@ app.get("/api/photos", (req, res) => {
 app.get("/api/photos/:id", (req, res) => {
   try {
     const photoId = req.params.id;
-    const photoStmt = db.prepare(`
+    const photoStmt = galleryDb.prepare(`
       SELECT p.*, 
              (SELECT AVG(rating) FROM ratings WHERE photo_id = p.id) as avgRating,
              (SELECT COUNT(*) FROM ratings WHERE photo_id = p.id) as ratingCount
@@ -417,7 +451,7 @@ app.post("/api/photos/:id/rate", (req, res) => {
       return res.status(400).json({ error: "Rating must be between 1 and 5" });
     }
 
-    const stmt = db.prepare(
+    const stmt = galleryDb.prepare(
       "INSERT INTO ratings (photo_id, rating) VALUES (?, ?)",
     );
     stmt.run(photoId, rating);
@@ -469,17 +503,17 @@ app.post(
         return res.status(400).json({ error: "Image file is required" });
       }
 
-      const { title, description, location } = req.body;
+      const { title, titleAr, description, descriptionAr, location } = req.body;
       const filename = req.file.filename;
 
-      const stmt = db.prepare(`
-      INSERT INTO photos (filename, title, description, location)
-      VALUES (?, ?, ?, ?)
-    `);
+      const stmt = galleryDb.prepare(`
+        INSERT INTO photos (filename, title, titleAr, description, descriptionAr, location)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `);
 
       // Auth protected now
 
-      const info = stmt.run(filename, title, description, location);
+      const info = stmt.run(filename, title, titleAr || null, description, descriptionAr || null, location);
       res.json({ success: true, id: info.lastInsertRowid });
     } catch (error) {
       console.error("Failed to upload photo:", error);
@@ -514,7 +548,7 @@ app.post("/api/auth/login", (req, res) => {
   }
 
   const { password } = req.body;
-  const setting = db
+  const setting = portfolioDb
     .prepare("SELECT value FROM settings WHERE key = 'admin_password'")
     .get() as any;
   const currentPassword = setting?.value || ADMIN_PASSWORD;
@@ -538,7 +572,7 @@ app.post("/api/auth/login", (req, res) => {
 
 app.post("/api/admin/change-password", verifyAdmin, (req, res) => {
   const { currentPassword, newPassword } = req.body;
-  const setting = db
+  const setting = portfolioDb
     .prepare("SELECT value FROM settings WHERE key = 'admin_password'")
     .get() as any;
   const actualPassword = setting?.value || ADMIN_PASSWORD;
@@ -547,15 +581,15 @@ app.post("/api/admin/change-password", verifyAdmin, (req, res) => {
     return res.status(401).json({ error: "Incorrect current password" });
   }
 
-  const existingSetting = db
+  const existingSetting = portfolioDb
     .prepare("SELECT key FROM settings WHERE key = 'admin_password'")
     .get();
   if (existingSetting) {
-    db.prepare(
+    portfolioDb.prepare(
       "UPDATE settings SET value = ? WHERE key = 'admin_password'",
     ).run(newPassword);
   } else {
-    db.prepare(
+    portfolioDb.prepare(
       "INSERT INTO settings (key, value) VALUES ('admin_password', ?)",
     ).run(newPassword);
   }
@@ -566,7 +600,7 @@ app.post("/api/admin/change-password", verifyAdmin, (req, res) => {
 // GET Links
 app.get("/api/links", (req, res) => {
   try {
-    const links = db.prepare("SELECT * FROM links").all();
+    const links = portfolioDb.prepare("SELECT * FROM links").all();
     res.json(links);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch links" });
@@ -576,7 +610,7 @@ app.get("/api/links", (req, res) => {
 // GET Skills
 app.get("/api/skills", (req, res) => {
   try {
-    const skills = db.prepare("SELECT * FROM skills").all();
+    const skills = portfolioDb.prepare("SELECT * FROM skills").all();
     res.json(skills);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch skills" });
@@ -586,25 +620,39 @@ app.get("/api/skills", (req, res) => {
 // GET Projects
 app.get("/api/projects", (req, res) => {
   try {
-    const projects = db.prepare("SELECT * FROM projects").all();
+    const projects = portfolioDb.prepare("SELECT * FROM projects").all();
     res.json(projects);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch projects" });
   }
 });
 
+// GET Certificates
+app.get("/api/certificates", (req, res) => {
+  try {
+    const certs = portfolioDb.prepare("SELECT * FROM certificates").all();
+    res.json(certs);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch certificates" });
+  }
+});
+
+app.post("/api/admin/debug", (req, res) => {
+  res.json({ body: req.body, headers: req.headers, query: req.query });
+});
+
 // Admin Add Link
 app.post("/api/admin/links", verifyAdmin, (req, res) => {
   const { name, url, icon } = req.body;
   try {
-    db.prepare("INSERT INTO links (name, url, icon) VALUES (?, ?, ?)").run(
+    portfolioDb.prepare("INSERT INTO links (name, url, icon) VALUES (?, ?, ?)").run(
       name,
       url,
-      icon,
+      icon || null,
     );
     res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to add link" });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to add link" });
   }
 });
 
@@ -612,7 +660,7 @@ app.post("/api/admin/links", verifyAdmin, (req, res) => {
 app.post("/api/admin/skills", verifyAdmin, (req, res) => {
   const { name, level, icon } = req.body;
   try {
-    db.prepare("INSERT INTO skills (name, level, icon) VALUES (?, ?, ?)").run(
+    portfolioDb.prepare("INSERT INTO skills (name, level, icon) VALUES (?, ?, ?)").run(
       name,
       level,
       icon || null,
@@ -627,7 +675,7 @@ app.post("/api/admin/skills", verifyAdmin, (req, res) => {
 app.post("/api/admin/projects", verifyAdmin, (req, res) => {
   const { title, description, tech_stack, githubUrl, liveUrl, icon } = req.body;
   try {
-    db.prepare(
+    portfolioDb.prepare(
       "INSERT INTO projects (title, description, tech_stack, githubUrl, liveUrl, icon) VALUES (?, ?, ?, ?, ?, ?)",
     ).run(title, description, tech_stack, githubUrl, liveUrl, icon || null);
     res.json({ success: true });
@@ -638,23 +686,24 @@ app.post("/api/admin/projects", verifyAdmin, (req, res) => {
 
 // Admin Edit / Delete Links
 app.put("/api/admin/links/:id", verifyAdmin, (req, res) => {
+  console.log("PUT /api/admin/links/:id called. body:", req.body, "params:", req.params);
   const { name, url, icon } = req.body;
   try {
-    db.prepare("UPDATE links SET name = ?, url = ?, icon = ? WHERE id = ?").run(
+    portfolioDb.prepare("UPDATE links SET name = ?, url = ?, icon = ? WHERE id = ?").run(
       name,
       url,
-      icon,
+      icon || null,
       req.params.id,
     );
     res.json({ success: true });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Link update error:", err);
-    res.status(500).json({ error: "Failed to update link" });
+    res.status(500).json({ error: err.message || "Failed to update link" });
   }
 });
 app.delete("/api/admin/links/:id", verifyAdmin, (req, res) => {
   try {
-    db.prepare("DELETE FROM links WHERE id = ?").run(req.params.id);
+    portfolioDb.prepare("DELETE FROM links WHERE id = ?").run(req.params.id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: "Failed to delete link" });
@@ -665,7 +714,7 @@ app.delete("/api/admin/links/:id", verifyAdmin, (req, res) => {
 app.put("/api/admin/skills/:id", verifyAdmin, (req, res) => {
   const { name, level, icon } = req.body;
   try {
-    db.prepare(
+    portfolioDb.prepare(
       "UPDATE skills SET name = ?, level = ?, icon = ? WHERE id = ?",
     ).run(name, level, icon || null, req.params.id);
     res.json({ success: true });
@@ -675,7 +724,7 @@ app.put("/api/admin/skills/:id", verifyAdmin, (req, res) => {
 });
 app.delete("/api/admin/skills/:id", verifyAdmin, (req, res) => {
   try {
-    db.prepare("DELETE FROM skills WHERE id = ?").run(req.params.id);
+    portfolioDb.prepare("DELETE FROM skills WHERE id = ?").run(req.params.id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: "Failed to delete skill" });
@@ -686,7 +735,7 @@ app.delete("/api/admin/skills/:id", verifyAdmin, (req, res) => {
 app.put("/api/admin/projects/:id", verifyAdmin, (req, res) => {
   const { title, description, tech_stack, githubUrl, liveUrl, icon } = req.body;
   try {
-    db.prepare(
+    portfolioDb.prepare(
       "UPDATE projects SET title = ?, description = ?, tech_stack = ?, githubUrl = ?, liveUrl = ?, icon = ? WHERE id = ?",
     ).run(
       title,
@@ -704,20 +753,63 @@ app.put("/api/admin/projects/:id", verifyAdmin, (req, res) => {
 });
 app.delete("/api/admin/projects/:id", verifyAdmin, (req, res) => {
   try {
-    db.prepare("DELETE FROM projects WHERE id = ?").run(req.params.id);
+    portfolioDb.prepare("DELETE FROM projects WHERE id = ?").run(req.params.id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: "Failed to delete project" });
   }
 });
 
+// Admin Add Certificate
+app.post("/api/admin/certificates", verifyAdmin, upload.single("pdf"), (req, res) => {
+  const { title, issuer, issue_date, url } = req.body;
+  const pdf_filename = req.file ? req.file.filename : null;
+  try {
+    portfolioDb.prepare(
+      "INSERT INTO certificates (title, issuer, issue_date, url, pdf_filename) VALUES (?, ?, ?, ?, ?)"
+    ).run(title, issuer, issue_date || null, url || null, pdf_filename);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to add certificate" });
+  }
+});
+
+// Admin Edit / Delete Certificates
+app.put("/api/admin/certificates/:id", verifyAdmin, upload.single("pdf"), (req, res) => {
+  const { title, issuer, issue_date, url } = req.body;
+  const pdf_filename = req.file ? req.file.filename : null;
+  try {
+    if (pdf_filename) {
+      portfolioDb.prepare(
+        "UPDATE certificates SET title = ?, issuer = ?, issue_date = ?, url = ?, pdf_filename = ? WHERE id = ?"
+      ).run(title, issuer, issue_date || null, url || null, pdf_filename, req.params.id);
+    } else {
+      portfolioDb.prepare(
+        "UPDATE certificates SET title = ?, issuer = ?, issue_date = ?, url = ? WHERE id = ?"
+      ).run(title, issuer, issue_date || null, url || null, req.params.id);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update certificate" });
+  }
+});
+
+app.delete("/api/admin/certificates/:id", verifyAdmin, (req, res) => {
+  try {
+    portfolioDb.prepare("DELETE FROM certificates WHERE id = ?").run(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete certificate" });
+  }
+});
+
 // Admin Edit / Delete Photos
 app.put("/api/admin/photos/:id", verifyAdmin, (req, res) => {
-  const { title, description, location } = req.body;
+  const { title, titleAr, description, descriptionAr, location } = req.body;
   try {
-    db.prepare(
-      "UPDATE photos SET title = ?, description = ?, location = ? WHERE id = ?",
-    ).run(title || null, description || null, location || null, req.params.id);
+    galleryDb.prepare(
+      "UPDATE photos SET title = ?, titleAr = ?, description = ?, descriptionAr = ?, location = ? WHERE id = ?",
+    ).run(title || null, titleAr || null, description || null, descriptionAr || null, location || null, req.params.id);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: "Failed to update photo" });
@@ -725,14 +817,14 @@ app.put("/api/admin/photos/:id", verifyAdmin, (req, res) => {
 });
 app.delete("/api/admin/photos/:id", verifyAdmin, (req, res) => {
   try {
-    const photo = db
+    const photo = galleryDb
       .prepare("SELECT filename FROM photos WHERE id = ?")
       .get(req.params.id) as any;
     if (photo && photo.filename) {
       const p = path.join(UPLOADS_DIR, photo.filename);
       if (fs.existsSync(p)) fs.unlinkSync(p);
     }
-    db.prepare("DELETE FROM photos WHERE id = ?").run(req.params.id);
+    galleryDb.prepare("DELETE FROM photos WHERE id = ?").run(req.params.id);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete photo" });
@@ -742,7 +834,7 @@ app.delete("/api/admin/photos/:id", verifyAdmin, (req, res) => {
 // GET Articles
 app.get("/api/articles", (req, res) => {
   try {
-    const articles = db
+    const articles = portfolioDb
       .prepare(
         "SELECT id, title, excerpt, createdAt FROM articles ORDER BY createdAt DESC",
       )
@@ -756,7 +848,7 @@ app.get("/api/articles", (req, res) => {
 // GET a single Article
 app.get("/api/articles/:id", (req, res) => {
   try {
-    const article = db
+    const article = portfolioDb
       .prepare("SELECT * FROM articles WHERE id = ?")
       .get(req.params.id);
     if (!article) return res.status(404).json({ error: "Article not found" });
@@ -775,7 +867,7 @@ app.post("/api/admin/articles", verifyAdmin, (req, res) => {
   }
   
   try {
-    const stmt = db.prepare(
+    const stmt = portfolioDb.prepare(
       "INSERT INTO articles (title, excerpt, content) VALUES (?, ?, ?)",
     );
     const info = stmt.run(title, excerpt || null, content);
@@ -795,7 +887,7 @@ app.put("/api/admin/articles/:id", verifyAdmin, (req, res) => {
   }
   
   try {
-    db.prepare(
+    portfolioDb.prepare(
       "UPDATE articles SET title = ?, excerpt = ?, content = ? WHERE id = ?",
     ).run(title, excerpt || null, content, req.params.id);
     res.json({ success: true });
@@ -807,7 +899,7 @@ app.put("/api/admin/articles/:id", verifyAdmin, (req, res) => {
 
 app.delete("/api/admin/articles/:id", verifyAdmin, (req, res) => {
   try {
-    db.prepare("DELETE FROM articles WHERE id = ?").run(req.params.id);
+    portfolioDb.prepare("DELETE FROM articles WHERE id = ?").run(req.params.id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: "Failed to delete article" });

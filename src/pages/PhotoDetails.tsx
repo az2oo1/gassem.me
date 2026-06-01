@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Photo } from "../types";
 import { ArrowLeft, Download } from "lucide-react";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export default function PhotoDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const [photo, setPhoto] = useState<Photo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,14 +96,18 @@ export default function PhotoDetails() {
         {/* Info Container */}
         <div className="w-full lg:w-1/3 xl:w-1/4 flex flex-col gap-8 lg:sticky lg:top-24">
           <div>
-            <h1 className="font-serif text-3xl md:text-4xl text-charcoal mb-2 leading-tight">{photo.title}</h1>
+            <h1 className="font-serif text-3xl md:text-4xl text-charcoal mb-2 leading-tight">
+              {language === "ar" && photo.titleAr ? photo.titleAr : photo.title}
+            </h1>
             {photo.location && (
               <p className="text-[10px] uppercase tracking-[0.15em] font-mono text-charcoal-light flex items-center gap-2 mb-6">
                  {photo.location}
               </p>
             )}
             <p className="text-sm leading-relaxed text-charcoal-light font-light">
-              {photo.description || "No description provided."}
+              {language === "ar" && photo.descriptionAr 
+                ? photo.descriptionAr 
+                : (photo.description || "No description provided.")}
             </p>
           </div>
 
