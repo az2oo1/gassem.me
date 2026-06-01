@@ -94,7 +94,7 @@ export default function Projects() {
       <div className="border-b border-soft-sepia pb-6 mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-3 flex items-center gap-3">
-            <Terminal className="w-8 h-8 text-accent" strokeWidth={1.5} />
+            <img src="/projects.png" alt="Projects" className="w-16 h-16 md:w-20 md:h-20 object-contain" />
             {t("projects.title")}
           </h2>
           <p className="text-charcoal-light text-sm rtl:text-base max-w-lg leading-relaxed">

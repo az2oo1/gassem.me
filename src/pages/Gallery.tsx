@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Photo } from "../types";
-import { Camera, Image as ImageIcon } from "lucide-react";
+import { Image as ImageIcon } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
 
 function BlurImage({ src, alt }: { src: string; alt: string }) {
@@ -49,7 +49,7 @@ export default function Gallery() {
       <div className="border-b border-soft-sepia pb-6 mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-3 flex items-center gap-3">
-            <Camera className="w-8 h-8 text-accent" strokeWidth={1.5} />
+            <img src="/camera.png" alt="Gallery" className="w-16 h-16 md:w-20 md:h-20 object-contain" />
             {t("gallery.title")}
           </h2>
           <p className="text-charcoal-light text-sm max-w-lg leading-relaxed">
