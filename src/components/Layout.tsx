@@ -168,7 +168,7 @@ export default function Layout() {
       {/* Slider Overlay */}
       <div
         className={clsx(
-          "fixed inset-0 bg-charcoal/20 backdrop-blur-sm z-50 transition-opacity duration-300",
+          "fixed inset-0 bg-charcoal/20 backdrop-blur-sm z-50 transition-opacity duration-300 md:hidden",
           isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none",
         )}
         onClick={() => setIsSidebarOpen(false)}
@@ -177,7 +177,7 @@ export default function Layout() {
       {/* Side Slider */}
       <aside
         className={clsx(
-          "fixed top-0 end-0 h-full w-72 bg-warm-white border-s border-soft-sepia z-50 transform transition-transform duration-300 ease-in-out flex flex-col shadow-2xl",
+          "fixed top-0 end-0 h-full w-72 bg-warm-white border-s border-soft-sepia z-50 transform transition-transform duration-300 ease-in-out flex flex-col shadow-2xl md:hidden",
           isSidebarOpen ? "translate-x-0" : "translate-x-full rtl:-translate-x-full",
         )}
       >
