@@ -1701,12 +1701,27 @@ function ArticleManager() {
     fetchArticles();
   }, []);
 
-  const handleEdit = (a: any) => {
+  const handleEdit = async (a: any) => {
     setEditingId(a.id);
     setTitle(a.title);
     setExcerpt(a.excerpt || "");
-    setContent(a.content);
+    setContent("Loading content...");
     window.scrollTo({ top: 0, behavior: "smooth" });
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`/api/articles/${a.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const fullArt = await res.json();
+        setContent(fullArt.content || "");
+      } else {
+        setContent("");
+      }
+    } catch (e) {
+      console.error(e);
+      setContent("");
+    }
   };
 
   const cancelEdit = () => {

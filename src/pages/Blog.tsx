@@ -80,7 +80,7 @@ export default function Blog() {
                 {article.title}
               </h3>
               <p className="text-sm rtl:text-base text-charcoal-light line-clamp-3 mb-6" dir="auto">
-                {article.excerpt || article.content.substring(0, 150) + "..."}
+                {article.excerpt}
               </p>
               <div className="text-[10px] sm:text-xs rtl:text-sm rtl:sm:text-base font-semibold uppercase tracking-widest flex items-center text-accent">
                 {t("blog.read")}{" "}

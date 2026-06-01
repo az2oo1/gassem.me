@@ -217,7 +217,10 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + path.extname(file.originalname || ""));
   },
 });
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage,
+  limits: { fieldSize: 500 * 1024 * 1024 },
+});
 
 const optimizeImages = async (
   req: express.Request,
@@ -258,7 +261,7 @@ const optimizeImages = async (
 app.use(express.json({ limit: "500mb" }));
 app.use(express.urlencoded({ extended: true, limit: "500mb" }));
 
-const globalUpload = multer();
+const globalUpload = multer({ limits: { fieldSize: 500 * 1024 * 1024 } });
 
 // --- WAF BYPASS MIDDLEWARE ---
 app.use((req, res, next) => {
@@ -738,7 +741,9 @@ app.delete("/api/admin/photos/:id", verifyAdmin, (req, res) => {
 app.get("/api/articles", (req, res) => {
   try {
     const articles = db
-      .prepare("SELECT * FROM articles ORDER BY createdAt DESC")
+      .prepare(
+        "SELECT id, title, excerpt, createdAt FROM articles ORDER BY createdAt DESC",
+      )
       .all();
     res.json(articles);
   } catch (error) {
@@ -762,6 +767,11 @@ app.get("/api/articles/:id", (req, res) => {
 // Admin Add Article
 app.post("/api/admin/articles", verifyAdmin, (req, res) => {
   let { title, excerpt, content } = req.body;
+  
+  if (!excerpt && content) {
+    excerpt = content.replace(/<[^>]*>?/gm, '').substring(0, 150) + "...";
+  }
+  
   try {
     const stmt = db.prepare(
       "INSERT INTO articles (title, excerpt, content) VALUES (?, ?, ?)",
@@ -777,6 +787,11 @@ app.post("/api/admin/articles", verifyAdmin, (req, res) => {
 // Admin Edit / Delete Articles
 app.put("/api/admin/articles/:id", verifyAdmin, (req, res) => {
   let { title, excerpt, content } = req.body;
+  
+  if (!excerpt && content) {
+    excerpt = content.replace(/<[^>]*>?/gm, '').substring(0, 150) + "...";
+  }
+  
   try {
     db.prepare(
       "UPDATE articles SET title = ?, excerpt = ?, content = ? WHERE id = ?",
