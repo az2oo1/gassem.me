@@ -316,8 +316,9 @@ app.use((req, res, next) => {
 
   const isFileUploadEndpoint =
     req.path === "/api/admin/upload" ||
-    req.path.startsWith("/api/admin/photos") ||
-    req.path.startsWith("/api/admin/settings");
+    (req.path === "/api/admin/photos" && req.method === "POST") ||
+    req.path.startsWith("/api/admin/settings") ||
+    req.path.startsWith("/api/admin/certificates");
 
   if (req.is("multipart/form-data") && !isFileUploadEndpoint) {
     globalUpload.none()(req, res, (err) => {
