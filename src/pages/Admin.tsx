@@ -556,7 +556,14 @@ function LinkManager() {
         },
         body: JSON.stringify({ name, url, icon }),
       });
-      if (!res.ok) throw new Error("Failed");
+      let errMsg = "Failed";
+      if (!res.ok) {
+        try {
+          const errData = await res.json();
+          if (errData.error) errMsg = errData.error;
+        } catch(e) {}
+        throw new Error(errMsg);
+      }
       setStatus({
         type: "success",
         msg: editingId
@@ -565,10 +572,12 @@ function LinkManager() {
       });
       cancelEdit();
       fetchLinks();
-    } catch {
+    } catch (e: any) {
       setStatus({
         type: "error",
-        msg: editingId ? "Failed to update link." : "Failed to add link.",
+        msg: e.message && e.message !== "Failed" 
+          ? `Failed to ${editingId ? "update" : "add"} link: ${e.message}` 
+          : editingId ? "Failed to update link." : "Failed to add link.",
       });
     } finally {
       setLoading(false);

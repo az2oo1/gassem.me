@@ -39,6 +39,7 @@ if (!fs.existsSync(DB_DIR)) {
 
 // Setup Database
 const db = new Database(path.join(DB_DIR, "gallery.db"));
+db.pragma('journal_mode = WAL');
 
 // Initialize schema
 db.exec(`
@@ -647,6 +648,7 @@ app.put("/api/admin/links/:id", verifyAdmin, (req, res) => {
     );
     res.json({ success: true });
   } catch (err) {
+    console.error("Link update error:", err);
     res.status(500).json({ error: "Failed to update link" });
   }
 });
