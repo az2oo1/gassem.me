@@ -6,9 +6,3 @@ coverage/
 *.log
 .env*
 !.env.example
-data/
-uploads/
-/data
-/uploads
-gallery.db
-*.db
