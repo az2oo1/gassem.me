@@ -6,6 +6,7 @@ import Database from "better-sqlite3";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import jwt from "jsonwebtoken";
+import exifr from "exifr";
 
 const app = express();
 const PORT = 3000;
@@ -76,6 +77,11 @@ try {
   galleryDb.exec("ALTER TABLE photos ADD COLUMN descriptionAr TEXT;");
 } catch (e) {
   // Ignore if column already exists
+}
+
+const photoMetaCols = ['camera', 'lens', 'focalLength', 'aperture', 'iso', 'exposureTime'];
+for (const col of photoMetaCols) {
+  try { galleryDb.exec(`ALTER TABLE photos ADD COLUMN ${col} TEXT`); } catch (e) {}
 }
 
 portfolioDb.exec(`
@@ -263,9 +269,14 @@ const optimizeImages = async (
   next: express.NextFunction,
 ) => {
   try {
-    const processFile = async (f: Express.Multer.File) => {
+    const processFile = async (f: Express.Multer.File & { exifData?: any }) => {
       if (!f.mimetype.startsWith("image/")) return;
       try {
+        const exifData = await exifr.parse(f.path).catch(() => null);
+        if (exifData) {
+          f.exifData = exifData;
+        }
+        
         const buffer = await sharp(f.path)
           .resize({ width: 1920, withoutEnlargement: true })
           .jpeg({ quality: 80, progressive: true })
@@ -510,14 +521,32 @@ app.post(
       const { title, titleAr, description, descriptionAr, location } = req.body;
       const filename = req.file.filename;
 
+      const exifData = (req.file as any).exifData || {};
+      
+      const camera = req.body.camera || [exifData.Make, exifData.Model].filter(Boolean).join(" ") || null;
+      const lens = req.body.lens || exifData.LensModel || null;
+      const focalLength = req.body.focalLength || (exifData.FocalLength ? `${exifData.FocalLength}mm` : null) || null;
+      const aperture = req.body.aperture || (exifData.FNumber ? `f/${exifData.FNumber}` : null) || null;
+      const iso = req.body.iso || (exifData.ISO ? `${exifData.ISO}` : null) || null;
+      // ExposureTime is often a floating point like 0.004. We could format as a fraction.
+      let exposureTimeStr = exifData.ExposureTime;
+      if (typeof exposureTimeStr === 'number') {
+         if (exposureTimeStr < 1 && exposureTimeStr > 0) {
+            exposureTimeStr = `1/${Math.round(1 / exposureTimeStr)}`;
+         } else {
+            exposureTimeStr = `${exposureTimeStr}s`;
+         }
+      }
+      const exposureTime = req.body.exposureTime || exposureTimeStr || null;
+
       const stmt = galleryDb.prepare(`
-        INSERT INTO photos (filename, title, titleAr, description, descriptionAr, location)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO photos (filename, title, titleAr, description, descriptionAr, location, camera, lens, focalLength, aperture, iso, exposureTime)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       // Auth protected now
 
-      const info = stmt.run(filename, title, titleAr || null, description, descriptionAr || null, location);
+      const info = stmt.run(filename, title, titleAr || null, description, descriptionAr || null, location, camera, lens, focalLength, aperture, iso, exposureTime);
       res.json({ success: true, id: info.lastInsertRowid });
     } catch (error) {
       console.error("Failed to upload photo:", error);
@@ -809,11 +838,11 @@ app.delete("/api/admin/certificates/:id", verifyAdmin, (req, res) => {
 
 // Admin Edit / Delete Photos
 app.put("/api/admin/photos/:id", verifyAdmin, (req, res) => {
-  const { title, titleAr, description, descriptionAr, location } = req.body;
+  const { title, titleAr, description, descriptionAr, location, camera, lens, focalLength, aperture, iso, exposureTime } = req.body;
   try {
     galleryDb.prepare(
-      "UPDATE photos SET title = ?, titleAr = ?, description = ?, descriptionAr = ?, location = ? WHERE id = ?",
-    ).run(title || null, titleAr || null, description || null, descriptionAr || null, location || null, req.params.id);
+      "UPDATE photos SET title = ?, titleAr = ?, description = ?, descriptionAr = ?, location = ?, camera = ?, lens = ?, focalLength = ?, aperture = ?, iso = ?, exposureTime = ? WHERE id = ?",
+    ).run(title || null, titleAr || null, description || null, descriptionAr || null, location || null, camera || null, lens || null, focalLength || null, aperture || null, iso || null, exposureTime || null, req.params.id);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: "Failed to update photo" });

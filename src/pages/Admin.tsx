@@ -234,9 +234,17 @@ function GalleryPoster() {
     {
       id: number;
       title: string;
+      titleAr?: string | null;
       filename: string;
       description: string;
+      descriptionAr?: string | null;
       location: string;
+      camera?: string;
+      lens?: string;
+      focalLength?: string;
+      aperture?: string;
+      iso?: string;
+      exposureTime?: string;
     }[]
   >([]);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -247,6 +255,13 @@ function GalleryPoster() {
   const [description, setDescription] = useState("");
   const [descriptionAr, setDescriptionAr] = useState("");
   const [location, setLocation] = useState("");
+  
+  const [camera, setCamera] = useState("");
+  const [lens, setLens] = useState("");
+  const [focalLength, setFocalLength] = useState("");
+  const [aperture, setAperture] = useState("");
+  const [iso, setIso] = useState("");
+  const [exposureTime, setExposureTime] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -277,6 +292,12 @@ function GalleryPoster() {
     setDescription(p.description || "");
     setDescriptionAr(p.descriptionAr || "");
     setLocation(p.location || "");
+    setCamera(p.camera || "");
+    setLens(p.lens || "");
+    setFocalLength(p.focalLength || "");
+    setAperture(p.aperture || "");
+    setIso(p.iso || "");
+    setExposureTime(p.exposureTime || "");
     setFile(null);
     setPreview(`/uploads/${p.filename}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -289,6 +310,12 @@ function GalleryPoster() {
     setDescription("");
     setDescriptionAr("");
     setLocation("");
+    setCamera("");
+    setLens("");
+    setFocalLength("");
+    setAperture("");
+    setIso("");
+    setExposureTime("");
     setFile(null);
     setPreview(null);
   };
@@ -312,7 +339,7 @@ function GalleryPoster() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ title, titleAr, description, descriptionAr, location }),
+          body: JSON.stringify({ title, titleAr, description, descriptionAr, location, camera, lens, focalLength, aperture, iso, exposureTime }),
         });
       } else {
         const formData = new FormData();
@@ -322,6 +349,12 @@ function GalleryPoster() {
         if (description) formData.append("description", description);
         if (descriptionAr) formData.append("descriptionAr", descriptionAr);
         if (location) formData.append("location", location);
+        if (camera) formData.append("camera", camera);
+        if (lens) formData.append("lens", lens);
+        if (focalLength) formData.append("focalLength", focalLength);
+        if (aperture) formData.append("aperture", aperture);
+        if (iso) formData.append("iso", iso);
+        if (exposureTime) formData.append("exposureTime", exposureTime);
 
         response = await wafFetch("/api/admin/photos", {
           method: "POST",
@@ -461,6 +494,80 @@ function GalleryPoster() {
               onChange={(e) => setLocation(e.target.value)}
               className="input-field"
               placeholder="e.g. KAFD, Saudi Arabia"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">
+              Camera / Body
+            </label>
+            <input
+              type="text"
+              value={camera}
+              onChange={(e) => setCamera(e.target.value)}
+              className="input-field"
+              placeholder="e.g. Sony A7 IV (Auto-extracted if blank)"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">
+              Lens
+            </label>
+            <input
+              type="text"
+              value={lens}
+              onChange={(e) => setLens(e.target.value)}
+              className="input-field"
+              placeholder="e.g. 50mm f/1.4"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">
+              Focal Length
+            </label>
+            <input
+              type="text"
+              value={focalLength}
+              onChange={(e) => setFocalLength(e.target.value)}
+              className="input-field"
+              placeholder="e.g. 50mm"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">
+              Aperture
+            </label>
+            <input
+              type="text"
+              value={aperture}
+              onChange={(e) => setAperture(e.target.value)}
+              className="input-field"
+              placeholder="e.g. f/1.4"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">
+              ISO
+            </label>
+            <input
+              type="text"
+              value={iso}
+              onChange={(e) => setIso(e.target.value)}
+              className="input-field"
+              placeholder="e.g. 100"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="block text-[10px] uppercase tracking-widest font-semibold text-charcoal">
+              Exposure Time
+            </label>
+            <input
+              type="text"
+              value={exposureTime}
+              onChange={(e) => setExposureTime(e.target.value)}
+              className="input-field"
+              placeholder="e.g. 1/200s"
             />
           </div>
         </div>

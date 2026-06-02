@@ -9,6 +9,12 @@ export interface Photo {
   createdAt: string;
   avgRating?: number | null;
   ratingCount?: number;
+  camera?: string | null;
+  lens?: string | null;
+  focalLength?: string | null;
+  aperture?: string | null;
+  iso?: string | null;
+  exposureTime?: string | null;
 }
 
 export interface LinkItem {

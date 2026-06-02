@@ -111,6 +111,22 @@ export default function PhotoDetails() {
             </p>
           </div>
 
+          {(photo.camera || photo.lens || photo.focalLength || photo.aperture || photo.exposureTime || photo.iso) && (
+            <div className="bg-warm-white p-6 rounded-sm border border-soft-sepia shadow-sm">
+              <h6 className="text-[10px] uppercase tracking-[0.1em] font-bold mb-4 text-charcoal border-b border-soft-sepia pb-2">Shot Settings</h6>
+              <div className="flex flex-col gap-3 font-mono text-xs text-charcoal-light uppercase tracking-wide">
+                {photo.camera && <div className="flex justify-between"><span>Shot BY</span><span className="font-semibold text-charcoal text-right">{photo.camera}</span></div>}
+                {photo.lens && <div className="flex justify-between"><span>LENS</span><span className="font-semibold text-charcoal text-right">{photo.lens}</span></div>}
+                <div className="grid grid-cols-2 gap-4 mt-2">
+                   {photo.focalLength && <div><span className="block text-[9px] text-muted mb-1">FOCAL</span><span className="text-charcoal font-semibold">{photo.focalLength}</span></div>}
+                   {photo.aperture && <div><span className="block text-[9px] text-muted mb-1">APERTURE</span><span className="text-charcoal font-semibold">{photo.aperture}</span></div>}
+                   {photo.iso && <div><span className="block text-[9px] text-muted mb-1">ISO</span><span className="text-charcoal font-semibold">{photo.iso}</span></div>}
+                   {photo.exposureTime && <div><span className="block text-[9px] text-muted mb-1">EXPOSURE</span><span className="text-charcoal font-semibold">{photo.exposureTime}</span></div>}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="bg-warm-white p-6 rounded-sm border border-soft-sepia shadow-sm">
             <h6 className="text-[10px] uppercase tracking-[0.1em] font-bold mb-4 text-charcoal border-b border-soft-sepia pb-2">Rating & Feedback</h6>
             
