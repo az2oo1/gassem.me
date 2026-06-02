@@ -482,12 +482,17 @@ function GalleryPoster() {
                   </button>
                 )}
               </div>
-              {!editingId && file && (
+              {(file || editingId) && (
                 <button
                   type="button"
                   onClick={async () => {
                     try {
-                      const exifData = await exifr.parse(file);
+                      let source: any = file;
+                      if (!source && preview) {
+                        const res = await fetch(preview);
+                        source = await res.arrayBuffer();
+                      }
+                      const exifData = await exifr.parse(source);
                       if (exifData) {
                         const newCamera = [exifData.Make, exifData.Model].filter(Boolean).join(" ");
                         if (newCamera) setCamera(newCamera);
