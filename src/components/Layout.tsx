@@ -88,7 +88,7 @@ export default function Layout() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-warm-white text-charcoal transition-colors duration-300">
+    <div className="relative min-h-screen flex flex-col font-sans bg-warm-white text-charcoal transition-colors duration-300">
       <header className="flex justify-between items-center px-6 md:px-12 py-4 md:py-5 border-b border-soft-sepia bg-warm-white sticky top-0 z-40">
         <div className="flex items-center gap-4 rtl:gap-8">
           <Link
@@ -236,7 +236,7 @@ export default function Layout() {
             transition={{ duration: 0.5, type: "spring", bounce: 0 }}
             src="/rightdowncornercutoutpaper.png" 
             alt="paper cutout bottom right" 
-            className="fixed bottom-0 right-0 w-40 md:w-56 lg:w-80 pointer-events-none z-20"
+            className="absolute bottom-0 right-0 w-40 md:w-56 lg:w-80 pointer-events-none z-20"
           />
         )}
       </AnimatePresence>
