@@ -188,7 +188,7 @@ export default function Home() {
                 className="block text-2xl rtl:text-5xl rtl:lg:text-6xl text-charcoal-light rtl:text-charcoal font-arabic opacity-90 rtl:opacity-100 text-left rtl:text-right w-full rtl:leading-tight"
                 lang="ar"
               >
-                عبدالعزيز القاسم
+                عبدالعزيــز القـاســم
               </span>
             </div>
 
