@@ -331,7 +331,10 @@ app.use((req, res, next) => {
 });
 
 // Serve uploaded files
-app.use("/uploads", express.static(UPLOADS_DIR));
+app.use("/uploads", express.static(UPLOADS_DIR, {
+  maxAge: '1y',
+  etag: true
+}));
 
 // --- API ROUTES ---
 
@@ -919,7 +922,10 @@ async function startServer() {
   } else {
     // Prod environment
     const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
+    app.use(express.static(distPath, {
+      maxAge: '1y',
+      etag: true
+    }));
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });

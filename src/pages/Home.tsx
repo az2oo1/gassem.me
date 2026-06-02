@@ -181,14 +181,14 @@ export default function Home() {
         <section className="md:col-span-6 bg-transparent p-6 md:p-10 pl-0 flex flex-col justify-between">
           <div>
             <div className="mb-8 border-l-2 rtl:border-l-0 rtl:border-r-2 border-accent pl-6 rtl:pl-0 rtl:pr-6 flex flex-col rtl:flex-col-reverse">
-              <h1 className="font-serif en-name text-4xl lg:text-5xl rtl:text-xl rtl:lg:text-2xl leading-tight text-charcoal rtl:text-charcoal-light mb-4 rtl:mb-0 rtl:mt-2 rtl:text-right">
+              <h1 className="font-serif en-name text-4xl lg:text-[2.75rem] rtl:text-xl rtl:lg:text-2xl leading-tight text-charcoal rtl:text-charcoal-light mb-4 rtl:mb-0 rtl:mt-2 rtl:text-right">
                 Abdulaziz Algassem
               </h1>
               <span
-                className="block text-2xl rtl:text-5xl rtl:lg:text-6xl text-charcoal-light rtl:text-charcoal font-arabic opacity-70 rtl:opacity-100 text-left rtl:text-right w-full rtl:leading-tight"
+                className="block text-2xl rtl:text-5xl rtl:lg:text-6xl text-charcoal-light rtl:text-charcoal font-arabic opacity-90 rtl:opacity-100 text-left rtl:text-right w-full rtl:leading-tight"
                 lang="ar"
               >
-                عبدالـعزيـز القـاسـم
+                عبدالعزيز القاسم
               </span>
             </div>
 
@@ -342,10 +342,17 @@ export default function Home() {
           </div>
           
           {certs.length > 0 && (
-            <div className="mt-12">
-              <h3 className="font-serif text-2xl text-charcoal mb-6 border-b border-soft-sepia/50 pb-2">
-                Certificates
-              </h3>
+            <div className="mt-16">
+              <div className="border-b border-soft-sepia pb-6 mb-8 flex items-end justify-between">
+                <div>
+                  <h2 className="font-serif text-3xl text-charcoal mb-2">
+                    {t("home.certificates")}
+                  </h2>
+                  <p className="text-charcoal-light text-sm max-w-lg leading-relaxed">
+                    {t("home.certificatesDesc")}
+                  </p>
+                </div>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {certs.map((c) => (
                   <div key={c.id} className="p-4 border border-soft-sepia rounded-sm bg-warm-white flex flex-col justify-between hover:shadow-sm transition-shadow">
@@ -356,13 +363,13 @@ export default function Home() {
                     </div>
                     <div className="mt-4 flex flex-wrap gap-3">
                       {c.pdf_filename && (
-                        <a href={`/uploads/${c.pdf_filename}`} target="_blank" rel="noopener noreferrer" className="text-xs uppercase tracking-widest text-charcoal hover:text-accent inline-flex items-center group flex-shrink-0">
-                          View PDF <ArrowUpRight className="w-3 h-3 ml-1 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
+                        <a href={`/uploads/${c.pdf_filename}`} target="_blank" rel="noopener noreferrer" className="text-xs uppercase tracking-widest rtl:tracking-normal text-charcoal hover:text-accent inline-flex items-center group flex-shrink-0 font-semibold rtl:font-medium">
+                          {t("home.viewPdf")} <ArrowUpRight className="w-3 h-3 ml-1 rtl:ml-0 rtl:mr-1 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-transform rtl:-scale-x-100" />
                         </a>
                       )}
                       {c.url && (
-                        <a href={c.url} target="_blank" rel="noopener noreferrer" className="text-xs uppercase tracking-widest text-accent hover:text-charcoal inline-flex items-center group flex-shrink-0">
-                          View Credential <ArrowUpRight className="w-3 h-3 ml-1 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
+                        <a href={c.url} target="_blank" rel="noopener noreferrer" className="text-xs uppercase tracking-widest rtl:tracking-normal text-accent hover:text-charcoal inline-flex items-center group flex-shrink-0 font-semibold rtl:font-medium">
+                          {t("home.viewCredential")} <ArrowUpRight className="w-3 h-3 ml-1 rtl:ml-0 rtl:mr-1 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-transform rtl:-scale-x-100" />
                         </a>
                       )}
                     </div>

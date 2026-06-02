@@ -149,7 +149,7 @@ export default function Projects() {
                           className="text-muted hover:text-accent transition-colors"
                           aria-label="Live Site"
                         >
-                          <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
+                          <ExternalLink className="w-4 h-4 rtl:-scale-x-100" strokeWidth={1.5} />
                         </a>
                       )}
                     </div>

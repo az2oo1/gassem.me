@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import { PenTool, Calendar, ArrowRight } from "lucide-react";
 import { Article } from "../types";
 import { useLanguage } from "../contexts/LanguageContext";
+import { motion } from "motion/react";
 
 export default function Blog() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -24,8 +25,16 @@ export default function Blog() {
 
   return (
     <div className="space-y-12 animate-fade-in w-full">
-      <div className="border-b border-soft-sepia pb-6 mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
+      <div className="border-b border-soft-sepia pb-6 mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 relative">
+        <motion.img 
+          initial={{ opacity: 0, scale: 0.8, rotate: language === "ar" ? -12 : 12 }}
+          animate={{ opacity: 0.6, scale: 1, rotate: language === "ar" ? -12 : 12 }}
+          transition={{ duration: 0.5, type: "spring", bounce: 0.4 }}
+          src="/mailstamp.png" 
+          alt="" 
+          className="absolute -top-4 right-8 md:right-24 w-20 md:w-28 pointer-events-none rtl:right-auto rtl:left-8 md:rtl:left-24"
+        />
+        <div className="relative z-10">
           <h2 className="font-serif text-3xl md:text-4xl text-charcoal mb-3 flex items-center gap-3">
             <img src="/typewriter.png" alt="Writings" className="w-16 h-16 md:w-20 md:h-20 object-contain" />
             {t("blog.title")}

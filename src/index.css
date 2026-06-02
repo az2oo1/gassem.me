@@ -60,7 +60,7 @@
 
 @theme {
   --font-serif:
-    "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times,
+    "Thmanyah", "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times,
     serif;
   --font-sans:
     "Thmanyah Sans", "Inter", ui-sans-serif, system-ui, -apple-system,
@@ -129,9 +129,7 @@ html.font-arabic {
 }
 
 html.font-arabic .en-name {
-  font-family:
-    "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times,
-    serif !important;
+  font-family: var(--font-serif) !important;
 }
 
 /* Custom Scrollbar styling */

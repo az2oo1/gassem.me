@@ -227,31 +227,39 @@ export default function Layout() {
         </div>
       </aside>
 
-      <main className="flex-grow w-full max-w-7xl mx-auto px-6 md:px-12 py-12 relative overflow-hidden">
-        <AnimatePresence mode="wait">
+      <AnimatePresence>
+        {(location.pathname.startsWith("/blog") || location.pathname.startsWith("/gallery")) && (
+          <motion.img 
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 0.8, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.9 }}
+            transition={{ duration: 0.5, type: "spring", bounce: 0 }}
+            src="/rightdowncornercutoutpaper.png" 
+            alt="paper cutout bottom right" 
+            className="fixed bottom-0 right-0 w-40 md:w-56 lg:w-80 pointer-events-none z-20"
+          />
+        )}
+      </AnimatePresence>
+
+      <main className="flex-grow w-full max-w-7xl mx-auto px-6 md:px-12 py-12 relative overflow-hidden grid">
+        <AnimatePresence>
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="w-full"
+            initial={{ opacity: 0, y: 15, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -15, scale: 0.98 }}
+            transition={{ duration: 0.4, type: "spring", bounce: 0 }}
+            className="w-full relative z-10 col-start-1 row-start-1"
           >
             <Outlet />
           </motion.div>
         </AnimatePresence>
       </main>
 
-      <footer className="px-6 md:px-12 py-6 bg-warm-white border-t border-soft-sepia flex flex-col md:flex-row justify-between items-center gap-4 mt-auto">
+      <footer className="px-6 md:px-12 py-6 bg-warm-white border-t border-soft-sepia flex flex-col md:flex-row justify-between items-center gap-4 mt-auto relative z-40">
         <p className="text-[10px] tracking-widest uppercase font-medium text-muted">
           © {new Date().getFullYear()} Abdulaziz — {t("footer.crafted")}
         </p>
-        <div className="flex items-center gap-3">
-          <div className="h-[1px] w-8 bg-accent hidden md:block"></div>
-          <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-charcoal-light">
-            Portfolio 1.0
-          </span>
-        </div>
         <Link
           to="/admin/dashboard"
           className="hidden md:block text-[10px] uppercase tracking-widest border-b border-transparent hover:border-accent font-medium text-muted hover:text-accent transition-colors"

@@ -83,12 +83,15 @@ const getSkillIcon = (skill: Skill) => {
 };
 
 const SkillCard: React.FC<{ skill: Skill }> = ({ skill }) => {
-  const getLevelColor = (level: string) => {
+  const getLevelValue = (level: string) => {
     switch (level.toLowerCase()) {
-      case "advanced": return "bg-skill-advanced w-full";
-      case "intermediate": return "bg-skill-intermediate w-2/3";
-      case "beginner": return "bg-skill-beginner w-1/3";
-      default: return "bg-accent opacity-50 w-1/2";
+      case "expert": return 5;
+      case "advanced": return 4;
+      case "proficient": return 4;
+      case "intermediate": return 3;
+      case "familiar": return 2;
+      case "beginner": return 1;
+      default: return 0;
     }
   };
 
@@ -101,11 +104,18 @@ const SkillCard: React.FC<{ skill: Skill }> = ({ skill }) => {
         <h3 className="font-serif text-lg text-charcoal group-hover:text-accent transition-colors break-words line-clamp-2 leading-tight">{skill.name}</h3>
       </div>
       <div>
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-[9px] uppercase tracking-[0.1em] text-muted font-mono">{skill.level}</span>
-        </div>
-        <div className="h-1 w-full bg-soft-sepia/30 rounded-full overflow-hidden">
-          <div className={`h-full rounded-full transition-all ${getLevelColor(skill.level)}`} />
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10px] rtl:text-[11px] uppercase tracking-widest rtl:tracking-normal font-medium text-muted">
+            {skill.level}
+          </span>
+          <div className="flex gap-1 w-full max-w-[120px]">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div 
+                key={i} 
+                className={`h-[2px] flex-1 rounded-sm transition-colors ${i < getLevelValue(skill.level) ? 'bg-accent/70' : 'bg-transparent'}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>
