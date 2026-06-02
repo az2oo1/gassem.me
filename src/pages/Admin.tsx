@@ -109,6 +109,8 @@ const wafFetch = async (url: string | URL | Request, options?: RequestInit) => {
   });
 };
 
+import exifr from "exifr";
+
 export default function Admin() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<
@@ -277,11 +279,35 @@ function GalleryPoster() {
     fetchPhotos();
   }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const selected = e.target.files[0];
       setFile(selected);
       setPreview(URL.createObjectURL(selected));
+      try {
+        const exifData = await exifr.parse(selected);
+        if (exifData) {
+          const newCamera = [exifData.Make, exifData.Model].filter(Boolean).join(" ");
+          if (newCamera) setCamera(newCamera);
+          if (exifData.LensModel) setLens(exifData.LensModel);
+          if (exifData.FocalLength) setFocalLength(`${exifData.FocalLength}mm`);
+          if (exifData.FNumber) setAperture(`f/${exifData.FNumber}`);
+          if (exifData.ISO) setIso(`${exifData.ISO}`);
+          if (exifData.ExposureTime) {
+            let exposureTimeStr = exifData.ExposureTime;
+            if (typeof exposureTimeStr === 'number') {
+               if (exposureTimeStr < 1 && exposureTimeStr > 0) {
+                  exposureTimeStr = `1/${Math.round(1 / exposureTimeStr)}s`;
+               } else {
+                  exposureTimeStr = `${exposureTimeStr}s`;
+               }
+            }
+            setExposureTime(exposureTimeStr);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to parse EXIF on select", err);
+      }
     }
   };
 
@@ -436,22 +462,62 @@ function GalleryPoster() {
               />
             </label>
           ) : (
-            <div className="relative w-full rounded-sm overflow-hidden border border-soft-sepia max-w-sm mx-auto">
-              <img
-                src={preview}
-                alt="Preview"
-                className="w-full h-auto object-cover"
-              />
-              {!editingId && (
+            <div className="relative w-full rounded-sm overflow-hidden border border-soft-sepia max-w-sm mx-auto flex flex-col">
+              <div className="relative">
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className="w-full h-auto object-cover"
+                />
+                {!editingId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFile(null);
+                      setPreview(null);
+                    }}
+                    className="absolute top-2 right-2 p-2 bg-charcoal/80 backdrop-blur rounded-sm text-warm-white hover:bg-charcoal shadow-sm transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              {!editingId && file && (
                 <button
                   type="button"
-                  onClick={() => {
-                    setFile(null);
-                    setPreview(null);
+                  onClick={async () => {
+                    try {
+                      const exifData = await exifr.parse(file);
+                      if (exifData) {
+                        const newCamera = [exifData.Make, exifData.Model].filter(Boolean).join(" ");
+                        if (newCamera) setCamera(newCamera);
+                        if (exifData.LensModel) setLens(exifData.LensModel);
+                        if (exifData.FocalLength) setFocalLength(`${exifData.FocalLength}mm`);
+                        if (exifData.FNumber) setAperture(`f/${exifData.FNumber}`);
+                        if (exifData.ISO) setIso(`${exifData.ISO}`);
+                        if (exifData.ExposureTime) {
+                          let exposureTimeStr = exifData.ExposureTime;
+                          if (typeof exposureTimeStr === 'number') {
+                             if (exposureTimeStr < 1 && exposureTimeStr > 0) {
+                                exposureTimeStr = `1/${Math.round(1 / exposureTimeStr)}s`;
+                             } else {
+                                exposureTimeStr = `${exposureTimeStr}s`;
+                             }
+                          }
+                          setExposureTime(exposureTimeStr);
+                        }
+                        alert("Metadata extracted successfully!");
+                      } else {
+                        alert("No EXIF metadata found in this image.");
+                      }
+                    } catch (error) {
+                      console.error("Failed to extract EXIF:", error);
+                      alert("Failed to extract EXIF metadata.");
+                    }
                   }}
-                  className="absolute top-2 right-2 p-2 bg-charcoal/80 backdrop-blur rounded-sm text-warm-white hover:bg-charcoal shadow-sm transition-colors"
+                  className="w-full bg-accent/10 text-accent hover:bg-accent hover:text-warm-white py-3 text-xs font-bold tracking-widest uppercase transition-colors"
                 >
-                  <X className="w-4 h-4" />
+                  Extract EXIF Data
                 </button>
               )}
             </div>
